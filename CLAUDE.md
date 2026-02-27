@@ -29,4 +29,5 @@ Currently contains only a legacy MySQL database dump (`gryphony_OP.sql.zip`). No
 ## Workflow
 
 - After completing each implementation step, commit to git with a descriptive conventional commit message.
+- Update `CHANGELOG.md` with each step's changes before committing.
 - See `plan.md` for the full implementation plan and step details.
