@@ -1,0 +1,28 @@
+[project]
+name = "wh-op"
+version = "0.1.0"
+description = "Order of Precedence for the Barony of the Flaming Gryphon (SCA)"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=6.0.2",
+    "django-filter>=25.2",
+    "django-htmx>=1.27.0",
+    "gunicorn>=25.1.0",
+    "pillow>=12.1.1",
+    "psycopg[binary]>=3.3.3",
+    "whitenoise>=6.12.0",
+]
+
+[dependency-groups]
+dev = [
+    "coverage>=7.13.4",
+    "factory-boy>=3.3.3",
+    "pytest>=9.0.2",
+    "pytest-django>=4.12.0",
+]
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings_test"
+python_files = ["tests.py", "test_*.py", "*_tests.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

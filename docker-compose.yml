@@ -1,0 +1,36 @@
+# ABOUTME: Docker Compose for the Flaming Gryphon OP app.
+# ABOUTME: Runs PostgreSQL and the Django web app together.
+
+services:
+  db:
+    image: postgres:16-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: gryphon_op
+      POSTGRES_USER: gryphon
+      POSTGRES_PASSWORD: gryphon
+    ports:
+      - "5432:5432"
+
+  web:
+    build: .
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --reload
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      SECRET_KEY: dev-secret-key-not-for-production
+      DEBUG: "True"
+      ALLOWED_HOSTS: localhost,127.0.0.1
+      POSTGRES_DB: gryphon_op
+      POSTGRES_USER: gryphon
+      POSTGRES_PASSWORD: gryphon
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+
+volumes:
+  postgres_data:
