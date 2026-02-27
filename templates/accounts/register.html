@@ -1,0 +1,22 @@
+<!-- ABOUTME: Registration form for new account requests. -->
+<!-- ABOUTME: Creates an unapproved user pending admin review. -->
+{% extends "base.html" %}
+
+{% block title %}Register — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Register</h1>
+<p>Request an account. An admin will review and approve your registration.</p>
+
+<form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">{{ field.label }}</label>
+    {{ field }}
+    {% if field.errors %}
+    <small class="error">{{ field.errors.0 }}</small>
+    {% endif %}
+    {% endfor %}
+    <button type="submit">Register</button>
+</form>
+{% endblock %}

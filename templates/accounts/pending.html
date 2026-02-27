@@ -1,0 +1,39 @@
+<!-- ABOUTME: Admin view listing users pending approval. -->
+<!-- ABOUTME: Shows approve buttons for each unapproved user. -->
+{% extends "base.html" %}
+
+{% block title %}Pending Users — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Pending User Approvals</h1>
+
+{% if pending_users %}
+<table>
+    <thead>
+        <tr>
+            <th>Username</th>
+            <th>Email</th>
+            <th>SCA Name</th>
+            <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for user in pending_users %}
+        <tr>
+            <td>{{ user.username }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.sca_name }}</td>
+            <td>
+                <form method="post" action="{% url 'accounts:approve' user.pk %}" style="display:inline;">
+                    {% csrf_token %}
+                    <button type="submit">Approve</button>
+                </form>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No users pending approval.</p>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,11 @@
+<!-- ABOUTME: Success page shown after registration. -->
+<!-- ABOUTME: Informs user their account is pending admin approval. -->
+{% extends "base.html" %}
+
+{% block title %}Registration Submitted — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Registration Submitted</h1>
+<p>Your account request has been submitted. An admin will review and approve your account.</p>
+<p><a href="{% url 'op:index' %}">Return to home page</a></p>
+{% endblock %}

@@ -32,6 +32,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Person detail page (`/people/<pk>/`) showing bestowals, alternate names, and registration info
 - Navigation links (Home, People) in base template
 - Pagination on person list (25 per page)
+- Custom User model with SCA name and admin-approved registration
+- Custom auth backend rejecting unapproved users at login
+- Registration form creating unapproved users pending admin review
+- Login/logout using Django's built-in auth views with custom templates
+- Admin pending-user approval view (`/accounts/pending/`)
+- Login/Logout links in base template navigation
 - Award list page (`/awards/`) grouped by category (Baronial, Champion, External) with recipient counts
 - Award detail page (`/awards/<pk>/`) with roll of recipients ordered by date
 - Event list page (`/events/`) showing chronological event history, most recent first
