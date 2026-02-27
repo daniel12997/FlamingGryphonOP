@@ -1,0 +1,27 @@
+<!-- ABOUTME: Person search/list page for the Order of Precedence. -->
+<!-- ABOUTME: Supports search by SCA name, mundane name, and alternate names with HTMX live search. -->
+{% extends "base.html" %}
+
+{% block title %}People — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>People</h1>
+
+<form role="search">
+    <input
+        type="search"
+        name="q"
+        value="{{ request.GET.q|default:'' }}"
+        placeholder="Search by name..."
+        aria-label="Search"
+        hx-get="{% url 'op:recipient_list' %}"
+        hx-trigger="input changed delay:300ms, search"
+        hx-target="#results"
+        hx-push-url="true"
+    >
+</form>
+
+<div id="results">
+    {% include "op/recipient_list_partial.html" %}
+</div>
+{% endblock %}

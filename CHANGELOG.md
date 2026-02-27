@@ -26,3 +26,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - HonorImage hex BLOB extraction to media files during import
 - SiteConfig population from legacy op_configuration table
 - Dirty data handling: skips null rows, zero keys, empty altnames, missing recipients
+- Public home page with quick search box and recent bestowals table
+- Person search page (`/people/`) with search by SCA name, mundane name, and alternate names
+- HTMX live search with 300ms debounce on person list
+- Person detail page (`/people/<pk>/`) showing bestowals, alternate names, and registration info
+- Navigation links (Home, People) in base template
+- Pagination on person list (25 per page)

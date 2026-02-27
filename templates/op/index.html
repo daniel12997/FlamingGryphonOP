@@ -1,5 +1,5 @@
 <!-- ABOUTME: Home page template for the Order of Precedence. -->
-<!-- ABOUTME: Shows welcome text and quick search. -->
+<!-- ABOUTME: Shows welcome text, quick search, and recent bestowals. -->
 {% extends "base.html" %}
 
 {% block title %}Home — Order of Precedence{% endblock %}
@@ -7,4 +7,33 @@
 {% block content %}
 <h1>Order of Precedence</h1>
 <p>Welcome to the Order of Precedence for the Barony of the Flaming Gryphon.</p>
+
+<form action="{% url 'op:recipient_list' %}" method="get" role="search">
+    <input type="search" name="q" placeholder="Search by name..." aria-label="Search">
+    <button type="submit">Search</button>
+</form>
+
+{% if recent_bestowals %}
+<h2>Recent Awards</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Recipient</th>
+            <th>Honor</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in recent_bestowals %}
+        <tr>
+            <td>{{ b.display_date|default:b.sort_date }}</td>
+            <td><a href="{% url 'op:recipient_detail' b.recipient.pk %}">{{ b.recipient.sca_name }}</a></td>
+            <td>{{ b.honor }}</td>
+            <td>{{ b.notes }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
 {% endblock %}

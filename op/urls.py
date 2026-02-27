@@ -9,4 +9,10 @@ app_name = "op"
 
 urlpatterns = [
     path("", views.index, name="index"),
+    path("people/", views.RecipientListView.as_view(), name="recipient_list"),
+    path(
+        "people/<int:pk>/",
+        views.RecipientDetailView.as_view(),
+        name="recipient_detail",
+    ),
 ]
