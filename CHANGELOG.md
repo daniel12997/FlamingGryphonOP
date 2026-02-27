@@ -32,3 +32,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Person detail page (`/people/<pk>/`) showing bestowals, alternate names, and registration info
 - Navigation links (Home, People) in base template
 - Pagination on person list (25 per page)
+- Award list page (`/awards/`) grouped by category (Baronial, Champion, External) with recipient counts
+- Award detail page (`/awards/<pk>/`) with roll of recipients ordered by date
+- Event list page (`/events/`) showing chronological event history, most recent first
+- Event detail page (`/events/<pk>/`) showing all bestowals at that event
+- Navigation links for Awards and Events in base template

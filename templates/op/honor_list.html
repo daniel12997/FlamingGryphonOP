@@ -1,0 +1,75 @@
+<!-- ABOUTME: Award list page for the Order of Precedence. -->
+<!-- ABOUTME: Groups honors by category (Baronial, Champion, External) with recipient counts. -->
+{% extends "base.html" %}
+
+{% block title %}Awards — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Awards</h1>
+
+{% if baronial_honors %}
+<h2>Baronial Awards &amp; Orders</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Abbreviation</th>
+            <th>Description</th>
+            <th>Recipients</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in baronial_honors %}
+        <tr>
+            <td><a href="{% url 'op:honor_detail' h.pk %}">{{ h }}</a></td>
+            <td>{{ h.abbreviation }}</td>
+            <td>{{ h.description|truncatewords:20 }}</td>
+            <td>{{ h.recipient_count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if champion_honors %}
+<h2>Champion Positions</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Holders</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in champion_honors %}
+        <tr>
+            <td><a href="{% url 'op:honor_detail' h.pk %}">{{ h }}</a></td>
+            <td>{{ h.description|truncatewords:20 }}</td>
+            <td>{{ h.recipient_count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if external_honors %}
+<h2>External / Kingdom Honors</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Recipients</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for h in external_honors %}
+        <tr>
+            <td><a href="{% url 'op:honor_detail' h.pk %}">{{ h }}</a></td>
+            <td>{{ h.recipient_count }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+{% endblock %}

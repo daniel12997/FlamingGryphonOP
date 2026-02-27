@@ -1,0 +1,44 @@
+<!-- ABOUTME: Event list page for the Order of Precedence. -->
+<!-- ABOUTME: Shows chronological list of events, most recent first. -->
+{% extends "base.html" %}
+
+{% block title %}Events — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Events</h1>
+
+{% if events %}
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Event</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for e in events %}
+        <tr>
+            <td>{{ e.date }}</td>
+            <td><a href="{% url 'op:event_detail' e.pk %}">{{ e.name }}</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if page_obj.has_other_pages %}
+<nav aria-label="Page navigation">
+    <ul>
+        {% if page_obj.has_previous %}
+        <li><a href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+        {% endif %}
+        <li>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</li>
+        {% if page_obj.has_next %}
+        <li><a href="?page={{ page_obj.next_page_number }}">Next</a></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+{% else %}
+<p>No events recorded.</p>
+{% endif %}
+{% endblock %}

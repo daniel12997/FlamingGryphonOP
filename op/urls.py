@@ -15,4 +15,16 @@ urlpatterns = [
         views.RecipientDetailView.as_view(),
         name="recipient_detail",
     ),
+    path("awards/", views.HonorListView.as_view(), name="honor_list"),
+    path(
+        "awards/<int:pk>/",
+        views.HonorDetailView.as_view(),
+        name="honor_detail",
+    ),
+    path("events/", views.EventListView.as_view(), name="event_list"),
+    path(
+        "events/<int:pk>/",
+        views.EventDetailView.as_view(),
+        name="event_detail",
+    ),
 ]

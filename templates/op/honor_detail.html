@@ -1,0 +1,49 @@
+<!-- ABOUTME: Award detail page showing the roll of recipients. -->
+<!-- ABOUTME: Displays honor info, badge image if available, and chronological recipient list. -->
+{% extends "base.html" %}
+
+{% block title %}{{ honor }} — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>{{ honor }}</h1>
+
+{% if honor.description %}
+<p>{{ honor.description }}</p>
+{% endif %}
+
+{% if honor.abbreviation %}
+<p><strong>Abbreviation:</strong> {{ honor.abbreviation }}</p>
+{% endif %}
+
+{% if honor.images.all %}
+{% for img in honor.images.all %}
+<figure>
+    <img src="{{ img.image.url }}" alt="Badge for {{ honor.name }}">
+</figure>
+{% endfor %}
+{% endif %}
+
+{% if bestowals %}
+<h2>Roll of Recipients</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Recipient</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in bestowals %}
+        <tr>
+            <td>{{ b.display_date|default:b.sort_date|default:"Unknown" }}</td>
+            <td><a href="{% url 'op:recipient_detail' b.recipient.pk %}">{{ b.recipient.sca_name }}</a></td>
+            <td>{{ b.notes }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No recipients recorded.</p>
+{% endif %}
+{% endblock %}
