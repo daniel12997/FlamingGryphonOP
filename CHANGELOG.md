@@ -14,3 +14,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Base HTML template with Pico CSS and HTMX
 - pytest-django test configuration with SQLite in-memory for tests
 - Whitenoise for static file serving
+- Core domain models: Recipient, AlternateName, Honor, HonorImage, Event, Bestowal, Group
+- Optional group FK on Recipient (null for legacy data, populated going forward)
+- Honor model with legacy_key field for cross-referencing external Kingdom awards
+- Django admin registration for all models with search, filters, and inlines
