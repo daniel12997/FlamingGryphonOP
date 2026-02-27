@@ -1,0 +1,75 @@
+<!-- ABOUTME: Batch bestowal entry form ("Record Court") for recording multiple awards at an event. -->
+<!-- ABOUTME: Header form for shared event/date, plus a formset of recipient+honor rows. -->
+{% extends "base.html" %}
+
+{% block title %}Record Court — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Record Court</h1>
+<p>Record multiple awards given at a single event.</p>
+
+<form method="post">
+    {% csrf_token %}
+
+    <fieldset>
+        <legend>Event Details</legend>
+        {% for field in header_form %}
+        <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {{ field }}
+            {% if field.help_text %}
+            <small>{{ field.help_text }}</small>
+            {% endif %}
+            {% if field.errors %}
+            <small class="error">{{ field.errors.0 }}</small>
+            {% endif %}
+        </label>
+        {% endfor %}
+    </fieldset>
+
+    <h2>Awards</h2>
+    {{ formset.management_form }}
+    <div id="formset-rows">
+        {% for form in formset %}
+        <fieldset>
+            {% for field in form %}
+            {% if not field.is_hidden %}
+            <label for="{{ field.id_for_label }}">
+                {{ field.label }}
+                {{ field }}
+            </label>
+            {% else %}
+            {{ field }}
+            {% endif %}
+            {% endfor %}
+        </fieldset>
+        {% endfor %}
+    </div>
+
+    <button type="button"
+            hx-get="{% url 'op:batch_add_row' %}?form_index={{ formset|length }}"
+            hx-target="#formset-rows"
+            hx-swap="beforeend"
+            class="secondary"
+            onclick="incrementTotalForms()">
+        Add Another Row
+    </button>
+
+    <script>
+        function incrementTotalForms() {
+            var totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+            var currentVal = parseInt(totalFormsInput.value);
+            totalFormsInput.value = currentVal + 1;
+            // Update the HTMX request URL with the new form index
+            var btn = event.target;
+            btn.setAttribute('hx-get', '{% url "op:batch_add_row" %}?form_index=' + (currentVal));
+            htmx.process(btn);
+        }
+    </script>
+
+    <div role="group">
+        <button type="submit">Save All</button>
+        <a href="{% url 'op:index' %}" role="button" class="secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

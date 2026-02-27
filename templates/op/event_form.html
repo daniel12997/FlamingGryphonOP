@@ -1,0 +1,26 @@
+<!-- ABOUTME: Create/edit form for Event objects. -->
+<!-- ABOUTME: Shared template for both EventCreateView and EventUpdateView. -->
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit {{ object.name }}{% else %}New Event{% endif %} — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>{% if object %}Edit Event{% else %}New Event{% endif %}</h1>
+
+<form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {{ field }}
+        {% if field.errors %}
+        <small class="error">{{ field.errors.0 }}</small>
+        {% endif %}
+    </label>
+    {% endfor %}
+    <div role="group">
+        <button type="submit">Save</button>
+        <a href="{% url 'op:event_list' %}" role="button" class="secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

@@ -10,21 +10,66 @@ app_name = "op"
 urlpatterns = [
     path("", views.index, name="index"),
     path("people/", views.RecipientListView.as_view(), name="recipient_list"),
+    path("people/new/", views.RecipientCreateView.as_view(), name="recipient_create"),
+    path(
+        "people/duplicate-check/",
+        views.recipient_duplicate_check,
+        name="recipient_duplicate_check",
+    ),
+    path(
+        "people/autocomplete/",
+        views.recipient_autocomplete,
+        name="recipient_autocomplete",
+    ),
+    path(
+        "people/quick-create/",
+        views.recipient_quick_create,
+        name="recipient_quick_create",
+    ),
     path(
         "people/<int:pk>/",
         views.RecipientDetailView.as_view(),
         name="recipient_detail",
     ),
+    path(
+        "people/<int:pk>/edit/",
+        views.RecipientUpdateView.as_view(),
+        name="recipient_update",
+    ),
     path("awards/", views.HonorListView.as_view(), name="honor_list"),
+    path("awards/new/", views.HonorCreateView.as_view(), name="honor_create"),
     path(
         "awards/<int:pk>/",
         views.HonorDetailView.as_view(),
         name="honor_detail",
     ),
+    path(
+        "awards/<int:pk>/edit/",
+        views.HonorUpdateView.as_view(),
+        name="honor_update",
+    ),
     path("events/", views.EventListView.as_view(), name="event_list"),
+    path("events/new/", views.EventCreateView.as_view(), name="event_create"),
     path(
         "events/<int:pk>/",
         views.EventDetailView.as_view(),
         name="event_detail",
     ),
+    path(
+        "events/<int:pk>/edit/",
+        views.EventUpdateView.as_view(),
+        name="event_update",
+    ),
+    path(
+        "bestowals/new/",
+        views.BestovalCreateView.as_view(),
+        name="bestowal_create",
+    ),
+    path(
+        "bestowals/<int:pk>/edit/",
+        views.BestovalUpdateView.as_view(),
+        name="bestowal_update",
+    ),
+    path("bestowals/batch/", views.batch_bestowal, name="batch_bestowal"),
+    path("bestowals/batch/add-row/", views.batch_add_row, name="batch_add_row"),
 ]

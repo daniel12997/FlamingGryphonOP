@@ -1,0 +1,16 @@
+<!-- ABOUTME: HTMX partial showing potential duplicate recipients. -->
+<!-- ABOUTME: Displayed when creating a new recipient with a similar SCA name. -->
+{% if matches or alt_matches %}
+<article aria-label="Duplicate warning">
+    <header><strong>Possible duplicates found:</strong></header>
+    <ul>
+        {% for r in matches %}
+        <li><a href="{% url 'op:recipient_detail' r.pk %}">{{ r.sca_name }}</a> ({{ r.mundane_name|default:"no mundane name" }})</li>
+        {% endfor %}
+        {% for name in alt_matches %}
+        <li>{{ name }} (via alternate name match)</li>
+        {% endfor %}
+    </ul>
+    <small>Please check these before creating a new entry.</small>
+</article>
+{% endif %}

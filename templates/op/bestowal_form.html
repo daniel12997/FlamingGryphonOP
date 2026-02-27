@@ -1,0 +1,59 @@
+<!-- ABOUTME: Create/edit form for Bestowal objects with recipient autocomplete. -->
+<!-- ABOUTME: Supports pre-filling recipient or event via query parameters. -->
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit Bestowal{% else %}New Bestowal{% endif %} — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>{% if object %}Edit Bestowal{% else %}New Bestowal{% endif %}</h1>
+
+<form method="post">
+    {% csrf_token %}
+
+    <label for="recipient-search">
+        Recipient
+        <input type="text" id="recipient-search"
+               placeholder="Search by SCA or mundane name..."
+               value="{% if prefilled_recipient %}{{ prefilled_recipient.sca_name }}{% endif %}"
+               hx-get="{% url 'op:recipient_autocomplete' %}"
+               hx-trigger="keyup changed delay:300ms"
+               hx-target="#autocomplete-results"
+               name="q"
+               autocomplete="off">
+        <input type="hidden" name="recipient" id="id_recipient"
+               value="{{ form.recipient.value|default_if_none:'' }}">
+    </label>
+
+    <div id="autocomplete-results"></div>
+
+    <div id="quick-create-area">
+        <a href="#" hx-get="{% url 'op:recipient_quick_create' %}"
+           hx-target="#quick-create-area"
+           hx-swap="innerHTML">Create new recipient</a>
+    </div>
+
+    {% for field in form %}
+    {% if field.name != "recipient" %}
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {{ field }}
+        {% if field.help_text %}
+        <small>{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.errors %}
+        <small class="error">{{ field.errors.0 }}</small>
+        {% endif %}
+    </label>
+    {% endif %}
+    {% endfor %}
+
+    {% if form.recipient.errors %}
+    <small class="error">{{ form.recipient.errors.0 }}</small>
+    {% endif %}
+
+    <div role="group">
+        <button type="submit">Save</button>
+        <a href="{% url 'op:index' %}" role="button" class="secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

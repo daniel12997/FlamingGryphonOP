@@ -1,0 +1,17 @@
+<!-- ABOUTME: HTMX partial for inline recipient creation from the bestowal form. -->
+<!-- ABOUTME: Minimal form that creates a recipient and populates the parent form. -->
+<fieldset>
+    <legend>Create New Recipient</legend>
+    <form hx-post="{% url 'op:recipient_quick_create' %}"
+          hx-target="#quick-create-area"
+          hx-swap="innerHTML">
+        {% csrf_token %}
+        {% for field in form %}
+        <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {{ field }}
+        </label>
+        {% endfor %}
+        <button type="submit">Create</button>
+    </form>
+</fieldset>

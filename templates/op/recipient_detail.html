@@ -66,4 +66,11 @@
 </dl>
 
 <p><strong>Status:</strong> {{ recipient.active|yesno:"Active,Inactive" }}</p>
+
+{% if user.is_authenticated %}
+<div role="group">
+    <a href="{% url 'op:recipient_update' recipient.pk %}" role="button">Edit Recipient</a>
+    <a href="{% url 'op:bestowal_create' %}?recipient={{ recipient.pk }}" role="button" class="secondary">Add Award</a>
+</div>
+{% endif %}
 {% endblock %}

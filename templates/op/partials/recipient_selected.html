@@ -1,0 +1,7 @@
+<!-- ABOUTME: HTMX partial shown after quick-creating a recipient. -->
+<!-- ABOUTME: Sets the hidden recipient field and shows the selected name. -->
+<p>Created: <strong>{{ recipient.sca_name }}</strong></p>
+<script>
+    document.getElementById('id_recipient').value = '{{ recipient.pk }}';
+    document.getElementById('recipient-search').value = '{{ recipient.sca_name }}';
+</script>

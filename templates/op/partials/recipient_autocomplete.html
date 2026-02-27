@@ -1,0 +1,13 @@
+<!-- ABOUTME: HTMX partial showing recipient autocomplete search results. -->
+<!-- ABOUTME: Each result is clickable and populates the hidden recipient field. -->
+{% if results %}
+<ul style="list-style: none; padding: 0;">
+    {% for r in results %}
+    <li>
+        <a href="#" onclick="document.getElementById('id_recipient').value='{{ r.pk }}'; document.getElementById('recipient-search').value='{{ r.sca_name }}'; document.getElementById('autocomplete-results').innerHTML=''; return false;">
+            {{ r.sca_name }}{% if r.mundane_name %} ({{ r.mundane_name }}){% endif %}{% if r.group %} — {{ r.group }}{% endif %}
+        </a>
+    </li>
+    {% endfor %}
+</ul>
+{% endif %}

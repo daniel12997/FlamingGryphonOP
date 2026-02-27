@@ -1,0 +1,14 @@
+<!-- ABOUTME: HTMX partial for a single batch bestowal formset row. -->
+<!-- ABOUTME: Returned by the batch_add_row endpoint for dynamic row addition. -->
+<fieldset>
+    {% for field in form %}
+    {% if not field.is_hidden %}
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {{ field }}
+    </label>
+    {% else %}
+    {{ field }}
+    {% endif %}
+    {% endfor %}
+</fieldset>

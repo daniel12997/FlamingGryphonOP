@@ -46,4 +46,10 @@
 {% else %}
 <p>No recipients recorded.</p>
 {% endif %}
+
+{% if user.is_staff %}
+<div role="group">
+    <a href="{% url 'op:honor_update' honor.pk %}" role="button">Edit Honor</a>
+</div>
+{% endif %}
 {% endblock %}

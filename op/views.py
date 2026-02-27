@@ -1,11 +1,31 @@
 # ABOUTME: Views for the op (Order of Precedence) app.
 # ABOUTME: Handles public browsing and authenticated management of OP data.
 
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, Q
 from django.shortcuts import render
-from django.views.generic import DetailView, ListView
+from django.urls import reverse, reverse_lazy
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
-from op.models import Bestowal, Event, Honor, Recipient
+from django.http import HttpResponse
+
+from django.shortcuts import redirect
+
+from op.forms import (
+    AlternateNameFormSet,
+    BatchBestovalFormSet,
+    BatchBestovalHeaderForm,
+    BatchBestovalRowForm,
+    BestovalForm,
+    EventForm,
+    HonorForm,
+    QuickRecipientForm,
+    RecipientForm,
+)
+from op.models import AlternateName, Bestowal, Event, Honor, Recipient
 
 
 def index(request):
@@ -110,3 +130,286 @@ class EventDetailView(DetailView):
             .order_by("sort_date", "sequence")
         )
         return context
+
+
+# --- Authenticated CRUD views ---
+
+
+class EventCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Event
+    form_class = EventForm
+    template_name = "op/event_form.html"
+    success_url = reverse_lazy("op:event_list")
+    success_message = "Event created successfully."
+
+
+class EventUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Event
+    form_class = EventForm
+    template_name = "op/event_form.html"
+    success_message = "Event updated successfully."
+
+    def get_success_url(self):
+        return reverse("op:event_detail", args=[self.object.pk])
+
+
+class RecipientCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Recipient
+    form_class = RecipientForm
+    template_name = "op/recipient_form.html"
+    success_message = "Recipient created successfully."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context["altname_formset"] = AlternateNameFormSet(
+                self.request.POST, prefix="alternate_names"
+            )
+        else:
+            context["altname_formset"] = AlternateNameFormSet(
+                prefix="alternate_names"
+            )
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        formset = context["altname_formset"]
+        if formset.is_valid():
+            self.object = form.save()
+            formset.instance = self.object
+            formset.save()
+            messages.success(self.request, self.success_message)
+            return super(CreateView, self).form_valid(form)
+        return self.form_invalid(form)
+
+    def get_success_url(self):
+        return reverse("op:recipient_detail", args=[self.object.pk])
+
+
+class RecipientUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Recipient
+    form_class = RecipientForm
+    template_name = "op/recipient_form.html"
+    success_message = "Recipient updated successfully."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.POST:
+            context["altname_formset"] = AlternateNameFormSet(
+                self.request.POST, instance=self.object, prefix="alternate_names"
+            )
+        else:
+            context["altname_formset"] = AlternateNameFormSet(
+                instance=self.object, prefix="alternate_names"
+            )
+        return context
+
+    def form_valid(self, form):
+        context = self.get_context_data()
+        formset = context["altname_formset"]
+        if formset.is_valid():
+            self.object = form.save()
+            formset.instance = self.object
+            formset.save()
+            messages.success(self.request, self.success_message)
+            return super(UpdateView, self).form_valid(form)
+        return self.form_invalid(form)
+
+    def get_success_url(self):
+        return reverse("op:recipient_detail", args=[self.object.pk])
+
+
+@login_required
+def recipient_duplicate_check(request):
+    """HTMX endpoint: returns partial with similar existing recipients."""
+    from difflib import SequenceMatcher
+
+    q = request.GET.get("sca_name", "").strip()
+    if len(q) < 3:
+        return render(request, "op/partials/duplicate_warning.html", {"matches": []})
+
+    candidates = Recipient.objects.all()
+    matches = []
+    for r in candidates:
+        ratio = SequenceMatcher(None, q.lower(), r.sca_name.lower()).ratio()
+        if ratio > 0.6:
+            matches.append(r)
+
+    # Also check alternate names
+    alt_matches = list(
+        AlternateName.objects.filter(name__icontains=q)
+        .select_related("recipient")
+        .values_list("recipient__sca_name", flat=True)
+        .distinct()[:5]
+    )
+
+    return render(
+        request,
+        "op/partials/duplicate_warning.html",
+        {"matches": matches, "alt_matches": alt_matches},
+    )
+
+
+class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
+    """Mixin that requires the user to be staff."""
+
+    def test_func(self):
+        return self.request.user.is_staff
+
+
+class HonorCreateView(StaffRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Honor
+    form_class = HonorForm
+    template_name = "op/honor_form.html"
+    success_url = reverse_lazy("op:honor_list")
+    success_message = "Honor created successfully."
+
+
+class HonorUpdateView(StaffRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Honor
+    form_class = HonorForm
+    template_name = "op/honor_form.html"
+    success_message = "Honor updated successfully."
+
+    def get_success_url(self):
+        return reverse("op:honor_detail", args=[self.object.pk])
+
+
+class BestovalCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Bestowal
+    form_class = BestovalForm
+    template_name = "op/bestowal_form.html"
+    success_message = "Bestowal created successfully."
+
+    def get_initial(self):
+        initial = super().get_initial()
+        if "recipient" in self.request.GET:
+            initial["recipient"] = self.request.GET["recipient"]
+        if "event" in self.request.GET:
+            initial["event"] = self.request.GET["event"]
+        return initial
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Pre-populate recipient display name for the autocomplete field
+        recipient_pk = self.request.GET.get("recipient") or self.request.POST.get(
+            "recipient"
+        )
+        if recipient_pk:
+            try:
+                context["prefilled_recipient"] = Recipient.objects.get(pk=recipient_pk)
+            except Recipient.DoesNotExist:
+                pass
+        return context
+
+    def get_success_url(self):
+        return reverse("op:recipient_detail", args=[self.object.recipient.pk])
+
+
+class BestovalUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+    model = Bestowal
+    form_class = BestovalForm
+    template_name = "op/bestowal_form.html"
+    success_message = "Bestowal updated successfully."
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["prefilled_recipient"] = self.object.recipient
+        return context
+
+    def get_success_url(self):
+        return reverse("op:recipient_detail", args=[self.object.recipient.pk])
+
+
+@login_required
+def recipient_autocomplete(request):
+    """HTMX endpoint returning recipient search results for autocomplete."""
+    q = request.GET.get("q", "").strip()
+    if len(q) < 2:
+        return HttpResponse("")
+
+    results = (
+        Recipient.objects.filter(
+            Q(sca_name__icontains=q)
+            | Q(mundane_name__icontains=q)
+            | Q(alternate_names__name__icontains=q)
+        )
+        .distinct()
+        .select_related("group")[:10]
+    )
+    return render(
+        request,
+        "op/partials/recipient_autocomplete.html",
+        {"results": results},
+    )
+
+
+@login_required
+def recipient_quick_create(request):
+    """HTMX endpoint for inline recipient creation from bestowal form."""
+    if request.method == "POST":
+        form = QuickRecipientForm(request.POST)
+        if form.is_valid():
+            recipient = form.save()
+            return render(
+                request,
+                "op/partials/recipient_selected.html",
+                {"recipient": recipient},
+            )
+    else:
+        form = QuickRecipientForm()
+    return render(
+        request,
+        "op/partials/quick_recipient_form.html",
+        {"form": form},
+    )
+
+
+@login_required
+def batch_bestowal(request):
+    """Record Court: create multiple bestowals for a single event/date."""
+    if request.method == "POST":
+        header_form = BatchBestovalHeaderForm(request.POST)
+        formset = BatchBestovalFormSet(request.POST)
+        if header_form.is_valid() and formset.is_valid():
+            event = header_form.cleaned_data["event"]
+            date = header_form.cleaned_data["date"]
+            if not event and header_form.cleaned_data["new_event_name"]:
+                event = Event.objects.create(
+                    name=header_form.cleaned_data["new_event_name"],
+                    date=date,
+                )
+            for i, form in enumerate(formset):
+                if form.cleaned_data and form.cleaned_data.get("recipient"):
+                    Bestowal.objects.create(
+                        recipient=form.cleaned_data["recipient"],
+                        honor=form.cleaned_data["honor"],
+                        notes=form.cleaned_data.get("notes", ""),
+                        sort_date=date,
+                        event=event,
+                        sequence=str(i),
+                    )
+            messages.success(request, "Bestowals recorded successfully.")
+            if event:
+                return redirect("op:event_detail", pk=event.pk)
+            return redirect("op:index")
+    else:
+        header_form = BatchBestovalHeaderForm()
+        formset = BatchBestovalFormSet()
+    return render(
+        request,
+        "op/bestowal_batch.html",
+        {"header_form": header_form, "formset": formset},
+    )
+
+
+@login_required
+def batch_add_row(request):
+    """HTMX endpoint: returns a new empty formset row."""
+    form_index = request.GET.get("form_index", "0")
+    form = BatchBestovalRowForm(prefix=f"form-{form_index}")
+    return render(
+        request,
+        "op/partials/batch_row.html",
+        {"form": form, "form_index": form_index},
+    )

@@ -21,6 +21,7 @@
                 <li><a href="{% url 'op:honor_list' %}">Awards</a></li>
                 <li><a href="{% url 'op:event_list' %}">Events</a></li>
                 {% if user.is_authenticated %}
+                <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
                 <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
                 {% else %}
                 <li><a href="{% url 'accounts:login' %}">Login</a></li>

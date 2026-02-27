@@ -43,3 +43,19 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 - Event list page (`/events/`) showing chronological event history, most recent first
 - Event detail page (`/events/<pk>/`) showing all bestowals at that event
 - Navigation links for Awards and Events in base template
+- Authenticated Event CRUD (`/events/new/`, `/events/<pk>/edit/`) with login required
+- Authenticated Recipient CRUD (`/people/new/`, `/people/<pk>/edit/`) with inline AlternateName formset
+- Fuzzy duplicate detection on recipient creation via HTMX (uses difflib.SequenceMatcher)
+- Staff-only Honor CRUD (`/awards/new/`, `/awards/<pk>/edit/`) with UserPassesTestMixin
+- Authenticated Bestowal CRUD (`/bestowals/new/`, `/bestowals/<pk>/edit/`) with recipient autocomplete
+- HTMX recipient autocomplete endpoint (`/people/autocomplete/`) searching SCA name, mundane name, and alternate names
+- HTMX quick-create recipient endpoint (`/people/quick-create/`) for inline creation from bestowal form
+- Batch bestowal entry ("Record Court") at `/bestowals/batch/` for recording multiple awards at a single event
+- HTMX dynamic row addition for batch bestowal formset
+- Pre-fill support on bestowal form via `?recipient=` and `?event=` query parameters
+- Edit and "Add Award" links on recipient detail page (authenticated users only)
+- Edit and "Add Bestowal" links on event detail page (authenticated users only)
+- Edit link on honor detail page (staff only)
+- "Record Court" navigation link for authenticated users
+- `op/forms.py` with ModelForms for Event, Recipient, Honor, Bestowal, and batch entry formsets
+- Shared pytest fixtures for auth clients in root conftest.py

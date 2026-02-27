@@ -1,0 +1,58 @@
+<!-- ABOUTME: Create/edit form for Recipient objects with inline AlternateName formset. -->
+<!-- ABOUTME: Includes HTMX duplicate detection triggered on SCA name change. -->
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit {{ object.sca_name }}{% else %}New Recipient{% endif %} — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>{% if object %}Edit Recipient{% else %}New Recipient{% endif %}</h1>
+
+<form method="post">
+    {% csrf_token %}
+
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {% if field.name == "sca_name" %}
+        <input type="text" name="{{ field.html_name }}" id="{{ field.id_for_label }}"
+               value="{{ field.value|default_if_none:'' }}"
+               hx-get="{% url 'op:recipient_duplicate_check' %}"
+               hx-trigger="change, keyup changed delay:500ms"
+               hx-target="#duplicate-warning"
+               hx-include="[name='sca_name']"
+               hx-params="sca_name"
+               required>
+        {% else %}
+        {{ field }}
+        {% endif %}
+        {% if field.errors %}
+        <small class="error">{{ field.errors.0 }}</small>
+        {% endif %}
+    </label>
+    {% endfor %}
+
+    <div id="duplicate-warning"></div>
+
+    <h2>Alternate Names</h2>
+    {{ altname_formset.management_form }}
+    {% for form in altname_formset %}
+    <fieldset>
+        {% for field in form %}
+        {% if not field.is_hidden %}
+        <label for="{{ field.id_for_label }}">
+            {{ field.label }}
+            {{ field }}
+        </label>
+        {% else %}
+        {{ field }}
+        {% endif %}
+        {% endfor %}
+    </fieldset>
+    {% endfor %}
+
+    <div role="group">
+        <button type="submit">Save</button>
+        <a href="{% url 'op:recipient_list' %}" role="button" class="secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

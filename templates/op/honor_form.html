@@ -1,0 +1,29 @@
+<!-- ABOUTME: Create/edit form for Honor objects (staff only). -->
+<!-- ABOUTME: Shared template for both HonorCreateView and HonorUpdateView. -->
+{% extends "base.html" %}
+
+{% block title %}{% if object %}Edit {{ object.name }}{% else %}New Honor{% endif %} — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>{% if object %}Edit Honor{% else %}New Honor{% endif %}</h1>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {{ field }}
+        {% if field.help_text %}
+        <small>{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.errors %}
+        <small class="error">{{ field.errors.0 }}</small>
+        {% endif %}
+    </label>
+    {% endfor %}
+    <div role="group">
+        <button type="submit">Save</button>
+        <a href="{% url 'op:honor_list' %}" role="button" class="secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}
