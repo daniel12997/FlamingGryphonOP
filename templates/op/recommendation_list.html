@@ -1,0 +1,60 @@
+<!-- ABOUTME: Admin-only list of award recommendations with status filtering. -->
+<!-- ABOUTME: Shows nominee, honor, recommender, status, and date. -->
+{% extends "base.html" %}
+
+{% block title %}Recommendations — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Recommendations</h1>
+
+<form method="get">
+    <fieldset role="group">
+        <select name="status">
+            <option value="">All statuses</option>
+            {% for value, label in status_choices %}
+            <option value="{{ value }}" {% if request.GET.status == value %}selected{% endif %}>{{ label }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit">Filter</button>
+    </fieldset>
+</form>
+
+{% if recommendations %}
+<table>
+    <thead>
+        <tr>
+            <th>Nominee</th>
+            <th>Honor</th>
+            <th>Recommender</th>
+            <th>Status</th>
+            <th>Date</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rec in recommendations %}
+        <tr>
+            <td><a href="{% url 'op:recommendation_detail' rec.pk %}">{{ rec.nominee_sca_name }}</a></td>
+            <td>{{ rec.honor }}</td>
+            <td>{{ rec.recommender.sca_name|default:rec.recommender.username }}</td>
+            <td>{{ rec.get_status_display }}</td>
+            <td>{{ rec.submitted_date }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if is_paginated %}
+<nav>
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Previous</a>
+    {% endif %}
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}{% if request.GET.status %}&status={{ request.GET.status }}{% endif %}">Next</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<p>No recommendations found.</p>
+{% endif %}
+{% endblock %}

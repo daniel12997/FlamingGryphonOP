@@ -8,6 +8,8 @@ import pytest
 from django.core.management import call_command
 
 from op.management.commands.import_legacy_sql import parse_insert_values, decode_legacy_text
+from django.contrib.auth import get_user_model
+
 from op.models import (
     AlternateName,
     Bestowal,
@@ -15,8 +17,11 @@ from op.models import (
     Group,
     Honor,
     Recipient,
+    Recommendation,
     SiteConfig,
 )
+
+User = get_user_model()
 
 
 SAMPLE_SQL = textwrap.dedent("""\
@@ -125,6 +130,38 @@ SAMPLE_SQL = textwrap.dedent("""\
       `file_data` longblob NOT NULL,
       PRIMARY KEY  (`imageID`)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+    CREATE TABLE `op_recommendations` (
+      `recID` int(11) NOT NULL auto_increment,
+      `yourtitle` varchar(120) default NULL,
+      `yourscaname` varchar(250) NOT NULL,
+      `yourmname` varchar(250) default NULL,
+      `youremail` varchar(250) NOT NULL,
+      `title` varchar(120) default NULL,
+      `scaname` varchar(250) NOT NULL,
+      `mname` varchar(250) default NULL,
+      `shire` varchar(30) default NULL,
+      `gender` enum('M','F') default NULL,
+      `minor` tinyint(1) NOT NULL default '0',
+      `honorkey` int(11) NOT NULL,
+      `recdate` date NOT NULL,
+      `deserve` text,
+      `given` tinyint(1) NOT NULL default '0',
+      PRIMARY KEY  (`recID`)
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+    INSERT INTO `op_recommendations` VALUES (14, 'Mistress', 'Gwyneth Banfhidhleir', 'Ginny Beatty', 'ginbeatty@gmail.com', 'Sir', 'Lothar Nachtshatten', 'Walter Kinzel', 'Out of Barony', 'M', 0, 190, '2017-06-15', 'Sir Lothar has served &quot;admirably&quot; for many years.', 0);
+    INSERT INTO `op_recommendations` VALUES (16, 'Baron', 'Gavin MacFergus', 'Ronnie McCormack', 'ron@yahoo.com', 'Lady', 'Astrid', 'Val Barr', 'Unicorn', 'F', 0, 190, '2017-08-09', 'Astrid is a treasure to the barony.', 1);
+    INSERT INTO `op_recommendations` VALUES (99, NULL, 'Spammer', NULL, 'spam@example.com', NULL, 'Buy Stuff', NULL, NULL, NULL, 0, 190, '2018-01-01', 'Visit http://spam.example.com for great deals!', 0);
+
+    CREATE TABLE `op_recevents` (
+      `recID` int(11) NOT NULL,
+      `eventID` int(11) NOT NULL,
+      PRIMARY KEY  (`recID`,`eventID`)
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+    INSERT INTO `op_recevents` VALUES (14, 1);
+    INSERT INTO `op_recevents` VALUES (16, 1);
 """)
 
 
@@ -252,3 +289,45 @@ class TestImportCommand:
         assert config.admin_email == "dafydd@midrealm.org"
         assert config.group_name_short == "Flaming Gryphon"
         assert config.coronet == "Edward and Allegra"
+
+    def test_imports_recommendations(self):
+        self._run_import()
+        # 3 rows in sample: 14 (normal), 16 (given=1), 99 (spam — skipped)
+        assert Recommendation.objects.count() == 2
+
+    def test_recommendation_given_status(self):
+        self._run_import()
+        rec16 = Recommendation.objects.get(nominee_sca_name="Astrid")
+        assert rec16.status == Recommendation.Status.GIVEN
+
+    def test_recommendation_pending_status(self):
+        self._run_import()
+        rec14 = Recommendation.objects.get(nominee_sca_name="Lothar Nachtshatten")
+        assert rec14.status == Recommendation.Status.PENDING
+
+    def test_recommendation_legacy_fields(self):
+        self._run_import()
+        rec14 = Recommendation.objects.get(nominee_sca_name="Lothar Nachtshatten")
+        assert rec14.legacy_recommender_sca_name == "Gwyneth Banfhidhleir"
+        assert rec14.legacy_recommender_email == "ginbeatty@gmail.com"
+        assert rec14.legacy_recommender_title == "Mistress"
+
+    def test_recommendation_html_decoded(self):
+        self._run_import()
+        rec14 = Recommendation.objects.get(nominee_sca_name="Lothar Nachtshatten")
+        assert '"admirably"' in rec14.justification
+
+    def test_recommendation_spam_skipped(self):
+        self._run_import()
+        assert not Recommendation.objects.filter(nominee_sca_name="Buy Stuff").exists()
+
+    def test_recommendation_system_user_created(self):
+        self._run_import()
+        assert User.objects.filter(username="legacy_import_system").exists()
+
+    def test_recommendation_linked_to_event(self):
+        self._run_import()
+        rec14 = Recommendation.objects.get(nominee_sca_name="Lothar Nachtshatten")
+        # recevents links recID=14 to eventID=1 (Push for Pennsic)
+        assert rec14.scheduled_event is not None
+        assert rec14.scheduled_event.name == "Push for Pennsic"

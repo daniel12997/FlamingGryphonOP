@@ -23,9 +23,11 @@ from op.forms import (
     EventForm,
     HonorForm,
     QuickRecipientForm,
+    RecommendationForm,
+    RecommendationStatusForm,
     RecipientForm,
 )
-from op.models import AlternateName, Bestowal, Event, Honor, Recipient
+from op.models import AlternateName, Bestowal, Event, Honor, Recipient, Recommendation
 
 
 def index(request):
@@ -413,3 +415,76 @@ def batch_add_row(request):
         "op/partials/batch_row.html",
         {"form": form, "form_index": form_index},
     )
+
+
+# --- Recommendation views ---
+
+
+class RecommendationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Recommendation
+    form_class = RecommendationForm
+    template_name = "op/recommendation_form.html"
+    success_url = reverse_lazy("op:index")
+    success_message = "Recommendation submitted successfully."
+
+    def form_valid(self, form):
+        form.instance.recommender = self.request.user
+        return super().form_valid(form)
+
+
+class RecommendationListView(StaffRequiredMixin, ListView):
+    model = Recommendation
+    template_name = "op/recommendation_list.html"
+    context_object_name = "recommendations"
+    paginate_by = 25
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("honor", "recommender")
+        status = self.request.GET.get("status")
+        if status:
+            qs = qs.filter(status=status)
+        honor_pk = self.request.GET.get("honor")
+        if honor_pk:
+            qs = qs.filter(honor_id=honor_pk)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["status_choices"] = Recommendation.Status.choices
+        return context
+
+
+class RecommendationDetailView(StaffRequiredMixin, DetailView):
+    model = Recommendation
+    template_name = "op/recommendation_detail.html"
+    context_object_name = "recommendation"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["status_form"] = RecommendationStatusForm(
+            initial={
+                "status": self.object.status,
+                "scheduled_event": self.object.scheduled_event,
+            }
+        )
+        return context
+
+
+@login_required
+def recommendation_update_status(request, pk):
+    """Admin-only endpoint to update recommendation status."""
+    if not request.user.is_staff:
+        from django.http import HttpResponseForbidden
+
+        return HttpResponseForbidden()
+
+    rec = Recommendation.objects.get(pk=pk)
+    if request.method == "POST":
+        form = RecommendationStatusForm(request.POST)
+        if form.is_valid():
+            rec.status = form.cleaned_data["status"]
+            if form.cleaned_data.get("scheduled_event"):
+                rec.scheduled_event = form.cleaned_data["scheduled_event"]
+            rec.save()
+            messages.success(request, f"Recommendation status updated to {rec.status}.")
+    return redirect("op:recommendation_detail", pk=pk)

@@ -1,0 +1,30 @@
+<!-- ABOUTME: Form for submitting an award recommendation. -->
+<!-- ABOUTME: Requires login. Only shows honors that accept recommendations. -->
+{% extends "base.html" %}
+
+{% block title %}Submit Recommendation — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Submit a Recommendation</h1>
+<p>Recommend someone for a baronial award. Your name will be recorded as the recommender.</p>
+
+<form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {{ field }}
+        {% if field.help_text %}
+        <small>{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.errors %}
+        <small class="error">{{ field.errors.0 }}</small>
+        {% endif %}
+    </label>
+    {% endfor %}
+    <div role="group">
+        <button type="submit">Submit Recommendation</button>
+        <a href="{% url 'op:index' %}" role="button" class="secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

@@ -6,6 +6,8 @@ import datetime
 import pytest
 from django.test import Client
 
+from django.contrib.auth import get_user_model
+
 from op.models import (
     AlternateName,
     Bestowal,
@@ -14,8 +16,11 @@ from op.models import (
     Honor,
     HonorImage,
     Recipient,
+    Recommendation,
     SiteConfig,
 )
+
+User = get_user_model()
 
 
 @pytest.mark.django_db
@@ -208,3 +213,75 @@ class TestHonorImage:
         img = HonorImage.objects.create(honor=h, image="badges/brand.gif")
         assert img.honor == h
         assert str(img) == "Image for Flaming Brand"
+
+
+@pytest.mark.django_db
+class TestRecommendation:
+    def test_create(self):
+        user = User.objects.create_user(
+            username="rec_user", password="pass123", is_approved=True
+        )
+        h = Honor.objects.create(
+            name="Flaming Brand",
+            prefix="Award of the",
+            accepts_recommendations=True,
+        )
+        rec = Recommendation.objects.create(
+            recommender=user,
+            nominee_sca_name="Some Person",
+            honor=h,
+            justification="Deserves it very much.",
+        )
+        assert rec.recommender == user
+        assert rec.honor == h
+        assert rec.status == Recommendation.Status.PENDING
+        assert rec.submitted_date is not None
+
+    def test_str(self):
+        user = User.objects.create_user(
+            username="rec_user", password="pass123", is_approved=True
+        )
+        h = Honor.objects.create(name="Flaming Brand", prefix="Award of the")
+        rec = Recommendation.objects.create(
+            recommender=user,
+            nominee_sca_name="Some Person",
+            honor=h,
+            justification="Reason.",
+        )
+        assert "Some Person" in str(rec)
+        assert "Flaming Brand" in str(rec)
+
+    def test_status_choices(self):
+        assert Recommendation.Status.PENDING == "PENDING"
+        assert Recommendation.Status.SCHEDULED == "SCHEDULED"
+        assert Recommendation.Status.GIVEN == "GIVEN"
+        assert Recommendation.Status.DECLINED == "DECLINED"
+
+    def test_scheduled_event_optional(self):
+        user = User.objects.create_user(
+            username="rec_user", password="pass123", is_approved=True
+        )
+        h = Honor.objects.create(name="Test Honor")
+        rec = Recommendation.objects.create(
+            recommender=user,
+            nominee_sca_name="Test Person",
+            honor=h,
+            justification="Testing.",
+        )
+        assert rec.scheduled_event is None
+
+    def test_legacy_fields(self):
+        user = User.objects.create_user(
+            username="sys_user", password="pass123", is_approved=True
+        )
+        h = Honor.objects.create(name="Test Honor")
+        rec = Recommendation.objects.create(
+            recommender=user,
+            nominee_sca_name="Historical Person",
+            honor=h,
+            justification="Old rec.",
+            legacy_recommender_sca_name="Lord Historical",
+            legacy_recommender_email="old@example.com",
+        )
+        assert rec.legacy_recommender_sca_name == "Lord Historical"
+        assert rec.legacy_recommender_email == "old@example.com"

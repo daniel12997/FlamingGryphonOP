@@ -72,4 +72,24 @@ urlpatterns = [
     ),
     path("bestowals/batch/", views.batch_bestowal, name="batch_bestowal"),
     path("bestowals/batch/add-row/", views.batch_add_row, name="batch_add_row"),
+    path(
+        "recommendations/",
+        views.RecommendationListView.as_view(),
+        name="recommendation_list",
+    ),
+    path(
+        "recommendations/new/",
+        views.RecommendationCreateView.as_view(),
+        name="recommendation_create",
+    ),
+    path(
+        "recommendations/<int:pk>/",
+        views.RecommendationDetailView.as_view(),
+        name="recommendation_detail",
+    ),
+    path(
+        "recommendations/<int:pk>/status/",
+        views.recommendation_update_status,
+        name="recommendation_update_status",
+    ),
 ]

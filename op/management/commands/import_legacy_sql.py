@@ -7,6 +7,10 @@ import re
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+import re as _re_module
+
+from django.contrib.auth import get_user_model
+
 from op.models import (
     AlternateName,
     Bestowal,
@@ -15,8 +19,14 @@ from op.models import (
     Honor,
     HonorImage,
     Recipient,
+    Recommendation,
     SiteConfig,
 )
+
+User = get_user_model()
+
+# URL pattern for spam detection in recommendations
+URL_PATTERN = _re_module.compile(r"https?://", _re_module.IGNORECASE)
 
 # Category mapping from legacy values
 CATEGORY_MAP = {
@@ -155,6 +165,8 @@ class Command(BaseCommand):
         self._import_bestowals(sql_text, honor_lookup, recipient_lookup, verbosity)
         self._import_honorimages(sql_text, honor_lookup, verbosity)
         self._import_configuration(sql_text, verbosity)
+        self._import_recommendations(sql_text, honor_lookup, verbosity)
+        self._import_recevents(sql_text, verbosity)
 
     def _import_groups(self, sql_text, verbosity):
         inserts = extract_inserts(sql_text, "op_groups")
@@ -416,3 +428,101 @@ class Command(BaseCommand):
         config.save()
         if verbosity > 0:
             self.stdout.write(f"  Configuration: {count} values imported")
+
+    def _get_or_create_system_user(self):
+        """Get or create a system user for imported legacy recommendations."""
+        user, _ = User.objects.get_or_create(
+            username="legacy_import_system",
+            defaults={
+                "is_active": False,
+                "is_approved": True,
+            },
+        )
+        return user
+
+    def _import_recommendations(self, sql_text, honor_lookup, verbosity):
+        inserts = extract_inserts(sql_text, "op_recommendations")
+        system_user = self._get_or_create_system_user()
+        count = 0
+        skipped = 0
+
+        for line in inserts:
+            vals = parse_insert_values(line)
+            if len(vals) < 15:
+                continue
+
+            rec_id = int(vals[0])
+            justification = decode_legacy_text(vals[13]) or ""
+
+            # Skip spam entries (rows with URLs in justification)
+            if URL_PATTERN.search(justification):
+                skipped += 1
+                continue
+
+            honorkey = int(vals[11]) if vals[11] else 0
+            honor = honor_lookup.get(honorkey)
+            if honor is None:
+                skipped += 1
+                continue
+
+            given = vals[14] == "1"
+
+            Recommendation.objects.get_or_create(
+                pk=rec_id,
+                defaults={
+                    "recommender": system_user,
+                    "nominee_sca_name": decode_legacy_text(vals[6]) or "",
+                    "nominee_mundane_name": decode_legacy_text(vals[7]) or "",
+                    "nominee_gender": vals[9] or "",
+                    "nominee_is_minor": vals[10] == "1",
+                    "honor": honor,
+                    "justification": justification,
+                    "status": Recommendation.Status.GIVEN if given else Recommendation.Status.PENDING,
+                    "legacy_recommender_title": decode_legacy_text(vals[1]) or "",
+                    "legacy_recommender_sca_name": decode_legacy_text(vals[2]) or "",
+                    "legacy_recommender_mundane_name": decode_legacy_text(vals[3]) or "",
+                    "legacy_recommender_email": decode_legacy_text(vals[4]) or "",
+                },
+            )
+            count += 1
+
+        if verbosity > 0:
+            self.stdout.write(
+                f"  Recommendations: {count} imported, {skipped} skipped"
+            )
+
+    def _import_recevents(self, sql_text, verbosity):
+        """Link recommendations to events via the op_recevents junction table."""
+        inserts = extract_inserts(sql_text, "op_recevents")
+        count = 0
+        skipped = 0
+
+        for line in inserts:
+            vals = parse_insert_values(line)
+            if len(vals) < 2:
+                continue
+
+            rec_id = int(vals[0])
+            event_id = int(vals[1])
+
+            try:
+                rec = Recommendation.objects.get(pk=rec_id)
+            except Recommendation.DoesNotExist:
+                skipped += 1
+                continue
+
+            try:
+                event = Event.objects.get(pk=event_id)
+            except Event.DoesNotExist:
+                skipped += 1
+                continue
+
+            # Use the most recent linked event (last one wins)
+            rec.scheduled_event = event
+            rec.save(update_fields=["scheduled_event"])
+            count += 1
+
+        if verbosity > 0:
+            self.stdout.write(
+                f"  Recommendation-events: {count} linked, {skipped} skipped"
+            )

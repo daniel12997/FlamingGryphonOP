@@ -4,7 +4,7 @@
 from django import forms
 from django.forms import formset_factory, inlineformset_factory
 
-from op.models import AlternateName, Bestowal, Event, Honor, Recipient
+from op.models import AlternateName, Bestowal, Event, Honor, Recipient, Recommendation
 
 
 class EventForm(forms.ModelForm):
@@ -111,3 +111,36 @@ class BatchBestovalRowForm(forms.Form):
 
 
 BatchBestovalFormSet = formset_factory(BatchBestovalRowForm, extra=5)
+
+
+class RecommendationForm(forms.ModelForm):
+    """Form for submitting an award recommendation."""
+
+    class Meta:
+        model = Recommendation
+        fields = [
+            "nominee_sca_name",
+            "nominee_mundane_name",
+            "nominee_group",
+            "nominee_gender",
+            "nominee_is_minor",
+            "honor",
+            "justification",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only show honors that accept recommendations
+        self.fields["honor"].queryset = Honor.objects.filter(
+            accepts_recommendations=True, is_active=True
+        )
+
+
+class RecommendationStatusForm(forms.Form):
+    """Form for admin to update recommendation status."""
+
+    status = forms.ChoiceField(choices=Recommendation.Status.choices)
+    scheduled_event = forms.ModelChoiceField(
+        queryset=Event.objects.all(),
+        required=False,
+    )

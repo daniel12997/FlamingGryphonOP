@@ -1,0 +1,59 @@
+<!-- ABOUTME: Admin-only recommendation detail page with status management. -->
+<!-- ABOUTME: Shows full recommendation info and allows scheduling, marking as given, or declining. -->
+{% extends "base.html" %}
+
+{% block title %}Recommendation: {{ recommendation.nominee_sca_name }} — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Recommendation: {{ recommendation.nominee_sca_name }}</h1>
+
+<dl>
+    <dt>Honor</dt>
+    <dd>{{ recommendation.honor }}</dd>
+    <dt>Status</dt>
+    <dd>{{ recommendation.get_status_display }}</dd>
+    <dt>Submitted</dt>
+    <dd>{{ recommendation.submitted_date }}</dd>
+    {% if recommendation.nominee_mundane_name %}
+    <dt>Mundane Name</dt>
+    <dd>{{ recommendation.nominee_mundane_name }}</dd>
+    {% endif %}
+    {% if recommendation.nominee_group %}
+    <dt>Group</dt>
+    <dd>{{ recommendation.nominee_group }}</dd>
+    {% endif %}
+    {% if recommendation.scheduled_event %}
+    <dt>Scheduled Event</dt>
+    <dd>{{ recommendation.scheduled_event }}</dd>
+    {% endif %}
+</dl>
+
+<h2>Recommender</h2>
+{% if recommendation.legacy_recommender_sca_name %}
+<p>
+    <strong>{{ recommendation.legacy_recommender_sca_name }}</strong>
+    {% if recommendation.legacy_recommender_email %}({{ recommendation.legacy_recommender_email }}){% endif %}
+    <small>(imported from legacy data)</small>
+</p>
+{% else %}
+<p>{{ recommendation.recommender.sca_name|default:recommendation.recommender.username }}
+    ({{ recommendation.recommender.email|default:"no email" }})</p>
+{% endif %}
+
+<h2>Justification</h2>
+<blockquote>{{ recommendation.justification }}</blockquote>
+
+<h2>Update Status</h2>
+<form method="post" action="{% url 'op:recommendation_update_status' recommendation.pk %}">
+    {% csrf_token %}
+    {% for field in status_form %}
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {{ field }}
+    </label>
+    {% endfor %}
+    <button type="submit">Update Status</button>
+</form>
+
+<p><a href="{% url 'op:recommendation_list' %}">Back to Recommendations</a></p>
+{% endblock %}

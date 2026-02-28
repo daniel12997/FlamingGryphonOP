@@ -1,6 +1,7 @@
 # ABOUTME: Models for the op (Order of Precedence) app.
-# ABOUTME: Core domain: recipients, honors, bestowals, events, groups, site config.
+# ABOUTME: Core domain: recipients, honors, bestowals, events, groups, recommendations, site config.
 
+from django.conf import settings
 from django.db import models
 
 
@@ -208,3 +209,60 @@ class Bestowal(models.Model):
 
     def __str__(self):
         return f"{self.recipient.sca_name} — {self.honor} ({self.sort_date})"
+
+
+class Recommendation(models.Model):
+    """An award recommendation submitted by a logged-in user."""
+
+    class Status(models.TextChoices):
+        PENDING = "PENDING", "Pending"
+        SCHEDULED = "SCHEDULED", "Scheduled"
+        GIVEN = "GIVEN", "Given"
+        DECLINED = "DECLINED", "Declined"
+
+    recommender = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="recommendations",
+    )
+    nominee_sca_name = models.CharField(max_length=250)
+    nominee_mundane_name = models.CharField(max_length=250, blank=True)
+    nominee_group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="recommendations",
+    )
+    nominee_gender = models.CharField(max_length=1, blank=True)
+    nominee_is_minor = models.BooleanField(default=False)
+    honor = models.ForeignKey(
+        Honor,
+        on_delete=models.CASCADE,
+        related_name="recommendations",
+    )
+    justification = models.TextField()
+    submitted_date = models.DateField(auto_now_add=True)
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.PENDING,
+    )
+    scheduled_event = models.ForeignKey(
+        Event,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="scheduled_recommendations",
+    )
+    # Legacy import fields — only populated for imported historical data
+    legacy_recommender_sca_name = models.CharField(max_length=250, blank=True)
+    legacy_recommender_mundane_name = models.CharField(max_length=250, blank=True)
+    legacy_recommender_email = models.CharField(max_length=250, blank=True)
+    legacy_recommender_title = models.CharField(max_length=250, blank=True)
+
+    class Meta:
+        ordering = ["-submitted_date"]
+
+    def __str__(self):
+        return f"{self.nominee_sca_name} for {self.honor} ({self.status})"

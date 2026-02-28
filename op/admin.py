@@ -11,6 +11,7 @@ from .models import (
     Honor,
     HonorImage,
     Recipient,
+    Recommendation,
     SiteConfig,
 )
 
@@ -62,3 +63,11 @@ class GroupAdmin(admin.ModelAdmin):
 @admin.register(HonorImage)
 class HonorImageAdmin(admin.ModelAdmin):
     list_display = ("honor", "image")
+
+
+@admin.register(Recommendation)
+class RecommendationAdmin(admin.ModelAdmin):
+    list_display = ("nominee_sca_name", "honor", "recommender", "status", "submitted_date")
+    list_filter = ("status", "honor")
+    search_fields = ("nominee_sca_name", "nominee_mundane_name")
+    raw_id_fields = ("recommender", "honor", "nominee_group", "scheduled_event")
