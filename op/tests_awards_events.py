@@ -2,82 +2,9 @@
 # ABOUTME: Covers honor list grouping, honor detail rolls, event list, and event detail.
 
 import pytest
-from django.test import Client
 from django.urls import reverse
 
-from op.models import Bestowal, Event, Honor, Recipient
-
-
-@pytest.fixture
-def client():
-    return Client()
-
-
-@pytest.fixture
-def baronial_honor():
-    return Honor.objects.create(
-        name="Flaming Brand",
-        prefix="Award of the",
-        category=Honor.Category.BARONIAL,
-        level=50,
-        abbreviation="AFB",
-        description="Given for service.",
-        is_active=True,
-    )
-
-
-@pytest.fixture
-def champion_honor():
-    return Honor.objects.create(
-        name="Baronial Champion",
-        category=Honor.Category.CHAMPION,
-        level=0,
-        is_active=True,
-    )
-
-
-@pytest.fixture
-def external_honor():
-    return Honor.objects.create(
-        name="External Honor #167",
-        category=Honor.Category.EXTERNAL,
-        is_external=True,
-        is_active=True,
-        legacy_key=167,
-    )
-
-
-@pytest.fixture
-def inactive_honor():
-    return Honor.objects.create(
-        name="Retired Award",
-        category=Honor.Category.BARONIAL,
-        is_active=False,
-    )
-
-
-@pytest.fixture
-def recipient():
-    return Recipient.objects.create(
-        sca_name="Bearengaer hinn Raudi",
-        mundane_name="Tony Lackey",
-        active=True,
-    )
-
-
-@pytest.fixture
-def event():
-    return Event.objects.create(name="Push for Pennsic", date="2011-07-09")
-
-
-@pytest.fixture
-def bestowal(recipient, baronial_honor):
-    return Bestowal.objects.create(
-        sort_date="1970-12-31",
-        recipient=recipient,
-        honor=baronial_honor,
-        notes="(1st Court Baronage)",
-    )
+from op.models import Bestowal, Event, Honor
 
 
 @pytest.mark.django_db
@@ -86,7 +13,7 @@ class TestHonorListView:
         response = client.get(reverse("op:honor_list"))
         assert response.status_code == 200
 
-    def test_shows_baronial_honors(self, client, baronial_honor):
+    def test_shows_baronial_honors(self, client, sample_honor):
         response = client.get(reverse("op:honor_list"))
         content = response.content.decode()
         assert "Flaming Brand" in content
@@ -96,7 +23,7 @@ class TestHonorListView:
         content = response.content.decode()
         assert "Baronial Champion" in content
 
-    def test_groups_by_category(self, client, baronial_honor, champion_honor):
+    def test_groups_by_category(self, client, sample_honor, champion_honor):
         response = client.get(reverse("op:honor_list"))
         content = response.content.decode()
         assert "Baronial" in content
@@ -107,7 +34,7 @@ class TestHonorListView:
         content = response.content.decode()
         assert "External" in content
 
-    def test_shows_recipient_count(self, client, bestowal):
+    def test_shows_recipient_count(self, client, sample_bestowal):
         response = client.get(reverse("op:honor_list"))
         content = response.content.decode()
         # The honor should show a count of 1 recipient
@@ -121,23 +48,23 @@ class TestHonorListView:
 
 @pytest.mark.django_db
 class TestHonorDetailView:
-    def test_returns_200(self, client, baronial_honor):
-        response = client.get(reverse("op:honor_detail", args=[baronial_honor.pk]))
+    def test_returns_200(self, client, sample_honor):
+        response = client.get(reverse("op:honor_detail", args=[sample_honor.pk]))
         assert response.status_code == 200
 
-    def test_shows_honor_name(self, client, baronial_honor):
-        response = client.get(reverse("op:honor_detail", args=[baronial_honor.pk]))
+    def test_shows_honor_name(self, client, sample_honor):
+        response = client.get(reverse("op:honor_detail", args=[sample_honor.pk]))
         content = response.content.decode()
         assert "Flaming Brand" in content
 
-    def test_shows_description(self, client, baronial_honor):
-        response = client.get(reverse("op:honor_detail", args=[baronial_honor.pk]))
+    def test_shows_description(self, client, sample_honor):
+        response = client.get(reverse("op:honor_detail", args=[sample_honor.pk]))
         content = response.content.decode()
         assert "Given for service." in content
 
-    def test_shows_recipients(self, client, bestowal):
+    def test_shows_recipients(self, client, sample_bestowal):
         response = client.get(
-            reverse("op:honor_detail", args=[bestowal.honor.pk])
+            reverse("op:honor_detail", args=[sample_bestowal.honor.pk])
         )
         content = response.content.decode()
         assert "Bearengaer hinn Raudi" in content
@@ -153,10 +80,10 @@ class TestEventListView:
         response = client.get(reverse("op:event_list"))
         assert response.status_code == 200
 
-    def test_shows_events(self, client, event):
+    def test_shows_events(self, client, sample_event):
         response = client.get(reverse("op:event_list"))
         content = response.content.decode()
-        assert "Push for Pennsic" in content
+        assert "Baronial Twelfth Night" in content
 
     def test_ordering_most_recent_first(self, client):
         Event.objects.create(name="Old Event", date="2010-01-01")
@@ -175,23 +102,23 @@ class TestEventListView:
 
 @pytest.mark.django_db
 class TestEventDetailView:
-    def test_returns_200(self, client, event):
-        response = client.get(reverse("op:event_detail", args=[event.pk]))
+    def test_returns_200(self, client, sample_event):
+        response = client.get(reverse("op:event_detail", args=[sample_event.pk]))
         assert response.status_code == 200
 
-    def test_shows_event_name(self, client, event):
-        response = client.get(reverse("op:event_detail", args=[event.pk]))
+    def test_shows_event_name(self, client, sample_event):
+        response = client.get(reverse("op:event_detail", args=[sample_event.pk]))
         content = response.content.decode()
-        assert "Push for Pennsic" in content
+        assert "Baronial Twelfth Night" in content
 
-    def test_shows_bestowals_by_fk(self, client, event, recipient, baronial_honor):
+    def test_shows_bestowals_by_fk(self, client, sample_event, sample_recipient, sample_honor):
         Bestowal.objects.create(
-            sort_date="2011-07-09",
-            recipient=recipient,
-            honor=baronial_honor,
-            event=event,
+            sort_date=sample_event.date,
+            recipient=sample_recipient,
+            honor=sample_honor,
+            event=sample_event,
         )
-        response = client.get(reverse("op:event_detail", args=[event.pk]))
+        response = client.get(reverse("op:event_detail", args=[sample_event.pk]))
         content = response.content.decode()
         assert "Bearengaer hinn Raudi" in content
         assert "Flaming Brand" in content

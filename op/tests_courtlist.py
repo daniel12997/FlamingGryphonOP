@@ -19,27 +19,18 @@ class TestCourtListView:
         response = admin_client.get(reverse("op:court_list"))
         assert response.status_code == 200
 
-    def test_shows_future_events(self, admin_client):
-        future = Event.objects.create(
-            name="Future Event", date=datetime.date(2027, 6, 1)
-        )
+    def test_shows_future_events(self, admin_client, future_event):
         past = Event.objects.create(
             name="Past Event", date=datetime.date(2020, 1, 1)
         )
         response = admin_client.get(reverse("op:court_list"))
         content = response.content.decode()
-        assert "Future Event" in content
+        assert future_event.name in content
         assert "Past Event" not in content
 
 
 @pytest.mark.django_db
 class TestCourtListDetail:
-    @pytest.fixture
-    def future_event(self, db):
-        return Event.objects.create(
-            name="Upcoming Investiture", date=datetime.date(2027, 3, 15)
-        )
-
     @pytest.fixture
     def draft_bestowal(self, future_event, sample_recipient, sample_honor):
         return Bestowal.objects.create(
@@ -68,7 +59,7 @@ class TestCourtListDetail:
     def test_shows_scheduled_recommendations(
         self, admin_client, future_event, approved_user, sample_honor
     ):
-        rec = Recommendation.objects.create(
+        Recommendation.objects.create(
             recommender=approved_user,
             nominee_sca_name="Scheduled Person",
             honor=sample_honor,
@@ -92,12 +83,6 @@ class TestCourtListDetail:
 
 @pytest.mark.django_db
 class TestAddToCourtList:
-    @pytest.fixture
-    def future_event(self, db):
-        return Event.objects.create(
-            name="Grand Tournament", date=datetime.date(2027, 5, 1)
-        )
-
     def test_add_draft_bestowal(self, admin_client, future_event, sample_honor):
         recipient = Recipient.objects.create(sca_name="Court Person")
         response = admin_client.post(
@@ -118,12 +103,6 @@ class TestAddToCourtList:
 
 @pytest.mark.django_db
 class TestPublishCourtList:
-    @pytest.fixture
-    def future_event(self, db):
-        return Event.objects.create(
-            name="Investiture", date=datetime.date(2027, 9, 1)
-        )
-
     @pytest.fixture
     def draft_bestowal(self, future_event, sample_recipient, sample_honor):
         return Bestowal.objects.create(
@@ -146,7 +125,7 @@ class TestPublishCourtList:
         self, admin_client, future_event, sample_honor, approved_user
     ):
         recipient = Recipient.objects.create(sca_name="Rec Person")
-        rec = Recommendation.objects.create(
+        Recommendation.objects.create(
             recommender=approved_user,
             nominee_sca_name="Rec Person",
             honor=sample_honor,
@@ -164,18 +143,12 @@ class TestPublishCourtList:
         admin_client.post(
             reverse("op:court_list_publish", args=[future_event.pk])
         )
-        rec.refresh_from_db()
+        rec = Recommendation.objects.get(nominee_sca_name="Rec Person")
         assert rec.status == Recommendation.Status.GIVEN
 
 
 @pytest.mark.django_db
 class TestReorderCourtList:
-    @pytest.fixture
-    def future_event(self, db):
-        return Event.objects.create(
-            name="Reorder Event", date=datetime.date(2027, 4, 1)
-        )
-
     def test_reorder(self, admin_client, future_event, sample_honor):
         r1 = Recipient.objects.create(sca_name="First")
         r2 = Recipient.objects.create(sca_name="Second")
@@ -201,12 +174,6 @@ class TestReorderCourtList:
 
 @pytest.mark.django_db
 class TestPrintCourtList:
-    @pytest.fixture
-    def future_event(self, db):
-        return Event.objects.create(
-            name="Print Event", date=datetime.date(2027, 7, 1)
-        )
-
     def test_print_requires_staff(self, auth_client, future_event):
         response = auth_client.get(
             reverse("op:court_list_print", args=[future_event.pk])
@@ -225,4 +192,4 @@ class TestPrintCourtList:
         assert response.status_code == 200
         content = response.content.decode()
         assert sample_recipient.sca_name in content
-        assert "Print Event" in content
+        assert future_event.name in content
