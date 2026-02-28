@@ -1,4 +1,4 @@
-<!-- ABOUTME: Base template for the Flaming Gryphon Order of Precedence app. -->
+<!-- ABOUTME: Base template for the Order of Precedence app. -->
 <!-- ABOUTME: Provides site-wide layout, navigation, HTMX, and Pico CSS. -->
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
@@ -13,7 +13,7 @@
     <header class="container">
         <nav>
             <ul>
-                <li><strong>Order of Precedence</strong></li>
+                <li><strong>{{ site_config.group_name_short }} Order of Precedence</strong></li>
             </ul>
             <ul>
                 <li><a href="{% url 'op:index' %}">Home</a></li>
@@ -21,10 +21,19 @@
                 <li><a href="{% url 'op:honor_list' %}">Awards</a></li>
                 <li><a href="{% url 'op:event_list' %}">Events</a></li>
                 {% if user.is_authenticated %}
+                <li><a href="{% url 'op:recommendation_create' %}">Recommend</a></li>
+                <li><a href="{% url 'op:report_create' %}">Report Error</a></li>
                 <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
+                {% if user.is_staff %}
+                <li><a href="{% url 'op:recommendation_list' %}">Recommendations</a></li>
+                <li><a href="{% url 'op:report_list' %}">Reports</a></li>
+                <li><a href="{% url 'op:court_list' %}">Court List</a></li>
+                {% endif %}
+                <li><a href="{% url 'op:my_reports' %}">My Reports</a></li>
                 <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
                 {% else %}
                 <li><a href="{% url 'accounts:login' %}">Login</a></li>
+                <li><a href="{% url 'accounts:register' %}">Register</a></li>
                 {% endif %}
             </ul>
         </nav>
@@ -38,7 +47,7 @@
         {% block content %}{% endblock %}
     </main>
     <footer class="container">
-        <small>Flaming Gryphon Order of Precedence</small>
+        <small>{{ site_config.group_name_long }} — Order of Precedence</small>
     </footer>
 </body>
 </html>
