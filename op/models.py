@@ -266,3 +266,40 @@ class Recommendation(models.Model):
 
     def __str__(self):
         return f"{self.nominee_sca_name} for {self.honor} ({self.status})"
+
+
+class Report(models.Model):
+    """An error/correction report for OP data."""
+
+    class Status(models.TextChoices):
+        NEW = "NEW", "New"
+        OPEN = "OPEN", "Open"
+        PENDING = "PENDING", "Pending"
+        RESOLVED = "RESOLVED", "Resolved"
+        CLOSED_NO_RESOLUTION = "CLOSED_NO_RESOLUTION", "Closed (no resolution)"
+
+    reporter = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="reports",
+    )
+    subject = models.CharField(max_length=255)
+    description = models.TextField()
+    resolution = models.TextField(blank=True)
+    status = models.CharField(
+        max_length=25,
+        choices=Status.choices,
+        default=Status.NEW,
+    )
+    created_date = models.DateField(auto_now_add=True)
+    last_updated = models.DateField(auto_now=True)
+    notify_reporter = models.BooleanField(default=True)
+    # Legacy import fields — only populated for imported historical data
+    legacy_reporter_sca_name = models.CharField(max_length=250, blank=True)
+    legacy_reporter_email = models.CharField(max_length=250, blank=True)
+
+    class Meta:
+        ordering = ["-created_date"]
+
+    def __str__(self):
+        return f"{self.subject} ({self.status})"

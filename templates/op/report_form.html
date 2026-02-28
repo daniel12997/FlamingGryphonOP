@@ -1,0 +1,30 @@
+<!-- ABOUTME: Form for submitting an error/correction report. -->
+<!-- ABOUTME: Requires login. Simple subject + description form. -->
+{% extends "base.html" %}
+
+{% block title %}Report an Error — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Report an Error or Correction</h1>
+<p>Found something wrong in the Order of Precedence? Let us know and we'll look into it.</p>
+
+<form method="post">
+    {% csrf_token %}
+    {% for field in form %}
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {{ field }}
+        {% if field.help_text %}
+        <small>{{ field.help_text }}</small>
+        {% endif %}
+        {% if field.errors %}
+        <small class="error">{{ field.errors.0 }}</small>
+        {% endif %}
+    </label>
+    {% endfor %}
+    <div role="group">
+        <button type="submit">Submit Report</button>
+        <a href="{% url 'op:index' %}" role="button" class="secondary">Cancel</a>
+    </div>
+</form>
+{% endblock %}

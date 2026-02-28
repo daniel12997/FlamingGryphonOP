@@ -4,7 +4,7 @@
 from django import forms
 from django.forms import formset_factory, inlineformset_factory
 
-from op.models import AlternateName, Bestowal, Event, Honor, Recipient, Recommendation
+from op.models import AlternateName, Bestowal, Event, Honor, Recipient, Recommendation, Report
 
 
 class EventForm(forms.ModelForm):
@@ -144,3 +144,18 @@ class RecommendationStatusForm(forms.Form):
         queryset=Event.objects.all(),
         required=False,
     )
+
+
+class ReportForm(forms.ModelForm):
+    """Form for submitting an error/correction report."""
+
+    class Meta:
+        model = Report
+        fields = ["subject", "description"]
+
+
+class ReportStatusForm(forms.Form):
+    """Form for admin to update report status and resolution."""
+
+    status = forms.ChoiceField(choices=Report.Status.choices)
+    resolution = forms.CharField(widget=forms.Textarea, required=False)

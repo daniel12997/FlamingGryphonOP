@@ -26,8 +26,10 @@ from op.forms import (
     RecommendationForm,
     RecommendationStatusForm,
     RecipientForm,
+    ReportForm,
+    ReportStatusForm,
 )
-from op.models import AlternateName, Bestowal, Event, Honor, Recipient, Recommendation
+from op.models import AlternateName, Bestowal, Event, Honor, Recipient, Recommendation, Report
 
 
 def index(request):
@@ -488,3 +490,82 @@ def recommendation_update_status(request, pk):
             rec.save()
             messages.success(request, f"Recommendation status updated to {rec.status}.")
     return redirect("op:recommendation_detail", pk=pk)
+
+
+# --- Report views ---
+
+
+class ReportCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+    model = Report
+    form_class = ReportForm
+    template_name = "op/report_form.html"
+    success_url = reverse_lazy("op:my_reports")
+    success_message = "Report submitted successfully."
+
+    def form_valid(self, form):
+        form.instance.reporter = self.request.user
+        return super().form_valid(form)
+
+
+class ReportListView(StaffRequiredMixin, ListView):
+    model = Report
+    template_name = "op/report_list.html"
+    context_object_name = "reports"
+    paginate_by = 25
+
+    def get_queryset(self):
+        qs = super().get_queryset().select_related("reporter")
+        status = self.request.GET.get("status")
+        if status:
+            qs = qs.filter(status=status)
+        return qs
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["status_choices"] = Report.Status.choices
+        return context
+
+
+class ReportDetailView(StaffRequiredMixin, DetailView):
+    model = Report
+    template_name = "op/report_detail.html"
+    context_object_name = "report"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["status_form"] = ReportStatusForm(
+            initial={
+                "status": self.object.status,
+                "resolution": self.object.resolution,
+            }
+        )
+        return context
+
+
+@login_required
+def report_update_status(request, pk):
+    """Admin-only endpoint to update report status and resolution."""
+    if not request.user.is_staff:
+        from django.http import HttpResponseForbidden
+
+        return HttpResponseForbidden()
+
+    report = Report.objects.get(pk=pk)
+    if request.method == "POST":
+        form = ReportStatusForm(request.POST)
+        if form.is_valid():
+            report.status = form.cleaned_data["status"]
+            report.resolution = form.cleaned_data.get("resolution", "")
+            report.save()
+            messages.success(request, f"Report status updated to {report.get_status_display()}.")
+    return redirect("op:report_detail", pk=pk)
+
+
+class MyReportsView(LoginRequiredMixin, ListView):
+    model = Report
+    template_name = "op/my_reports.html"
+    context_object_name = "reports"
+    paginate_by = 25
+
+    def get_queryset(self):
+        return Report.objects.filter(reporter=self.request.user).select_related("reporter")

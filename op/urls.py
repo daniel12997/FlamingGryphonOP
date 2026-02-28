@@ -92,4 +92,29 @@ urlpatterns = [
         views.recommendation_update_status,
         name="recommendation_update_status",
     ),
+    path(
+        "reports/",
+        views.ReportListView.as_view(),
+        name="report_list",
+    ),
+    path(
+        "reports/new/",
+        views.ReportCreateView.as_view(),
+        name="report_create",
+    ),
+    path(
+        "reports/mine/",
+        views.MyReportsView.as_view(),
+        name="my_reports",
+    ),
+    path(
+        "reports/<int:pk>/",
+        views.ReportDetailView.as_view(),
+        name="report_detail",
+    ),
+    path(
+        "reports/<int:pk>/status/",
+        views.report_update_status,
+        name="report_update_status",
+    ),
 ]

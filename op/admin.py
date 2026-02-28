@@ -12,6 +12,7 @@ from .models import (
     HonorImage,
     Recipient,
     Recommendation,
+    Report,
     SiteConfig,
 )
 
@@ -71,3 +72,11 @@ class RecommendationAdmin(admin.ModelAdmin):
     list_filter = ("status", "honor")
     search_fields = ("nominee_sca_name", "nominee_mundane_name")
     raw_id_fields = ("recommender", "honor", "nominee_group", "scheduled_event")
+
+
+@admin.register(Report)
+class ReportAdmin(admin.ModelAdmin):
+    list_display = ("subject", "reporter", "status", "created_date", "last_updated")
+    list_filter = ("status",)
+    search_fields = ("subject", "description")
+    raw_id_fields = ("reporter",)

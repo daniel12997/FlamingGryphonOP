@@ -18,6 +18,7 @@ from op.models import (
     Honor,
     Recipient,
     Recommendation,
+    Report,
     SiteConfig,
 )
 
@@ -162,6 +163,36 @@ SAMPLE_SQL = textwrap.dedent("""\
 
     INSERT INTO `op_recevents` VALUES (14, 1);
     INSERT INTO `op_recevents` VALUES (16, 1);
+
+    CREATE TABLE `op_reportStatus` (
+      `statusID` int(11) NOT NULL auto_increment,
+      `status` varchar(50) NOT NULL,
+      PRIMARY KEY  (`statusID`)
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+    INSERT INTO `op_reportStatus` VALUES (0, 'New');
+    INSERT INTO `op_reportStatus` VALUES (1, 'Open');
+    INSERT INTO `op_reportStatus` VALUES (2, 'Pending');
+    INSERT INTO `op_reportStatus` VALUES (3, 'Resolved');
+    INSERT INTO `op_reportStatus` VALUES (4, 'Closed (no resolution)');
+
+    CREATE TABLE `op_reports` (
+      `reportID` int(11) NOT NULL auto_increment,
+      `scaname` varchar(250) NOT NULL,
+      `email` varchar(250) NOT NULL,
+      `subject` varchar(255) NOT NULL,
+      `description` text NOT NULL,
+      `resolution` text,
+      `status` int(11) NOT NULL default '0',
+      `notify` tinyint(1) NOT NULL default '1',
+      `created` date NOT NULL,
+      `lastUpdated` date NOT NULL,
+      PRIMARY KEY  (`reportID`)
+    ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+    INSERT INTO `op_reports` VALUES (1, 'Dafydd Blaidd', 'dafydd@midrealm.org', 'Wrong date', 'The date for AFB #42 is wrong.', 'Fixed the date.', 3, 1, '2017-05-20', '2017-06-01');
+    INSERT INTO `op_reports` VALUES (2, 'Gwyneth', 'ginbeatty@gmail.com', 'Misspelling', 'Name is misspelled.', NULL, 0, 0, '2018-01-15', '2018-01-15');
+    INSERT INTO `op_reports` VALUES (3, 'Baron Edward', 'edward@example.com', 'Closed issue', 'Something happened.', NULL, 4, 1, '2018-03-01', '2018-04-01');
 """)
 
 
@@ -331,3 +362,41 @@ class TestImportCommand:
         # recevents links recID=14 to eventID=1 (Push for Pennsic)
         assert rec14.scheduled_event is not None
         assert rec14.scheduled_event.name == "Push for Pennsic"
+
+    def test_imports_reports(self):
+        self._run_import()
+        assert Report.objects.count() == 3
+
+    def test_report_resolved_status(self):
+        self._run_import()
+        report1 = Report.objects.get(pk=1)
+        assert report1.status == Report.Status.RESOLVED
+        assert report1.resolution == "Fixed the date."
+
+    def test_report_new_status(self):
+        self._run_import()
+        report2 = Report.objects.get(pk=2)
+        assert report2.status == Report.Status.NEW
+
+    def test_report_closed_no_resolution(self):
+        self._run_import()
+        report3 = Report.objects.get(pk=3)
+        assert report3.status == Report.Status.CLOSED_NO_RESOLUTION
+
+    def test_report_legacy_fields(self):
+        self._run_import()
+        report1 = Report.objects.get(pk=1)
+        assert report1.legacy_reporter_sca_name == "Dafydd Blaidd"
+        assert report1.legacy_reporter_email == "dafydd@midrealm.org"
+
+    def test_report_notify_field(self):
+        self._run_import()
+        report1 = Report.objects.get(pk=1)
+        assert report1.notify_reporter is True
+        report2 = Report.objects.get(pk=2)
+        assert report2.notify_reporter is False
+
+    def test_report_system_user(self):
+        self._run_import()
+        report1 = Report.objects.get(pk=1)
+        assert report1.reporter.username == "legacy_import_system"

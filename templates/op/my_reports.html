@@ -1,0 +1,48 @@
+<!-- ABOUTME: User's own submitted reports with status tracking. -->
+<!-- ABOUTME: Shows only reports submitted by the logged-in user. -->
+{% extends "base.html" %}
+
+{% block title %}My Reports — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>My Reports</h1>
+
+<p><a href="{% url 'op:report_create' %}" role="button">Submit a New Report</a></p>
+
+{% if reports %}
+<table>
+    <thead>
+        <tr>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>Created</th>
+            <th>Updated</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for report in reports %}
+        <tr>
+            <td>{{ report.subject }}</td>
+            <td>{{ report.get_status_display }}</td>
+            <td>{{ report.created_date }}</td>
+            <td>{{ report.last_updated }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+{% if is_paginated %}
+<nav>
+    {% if page_obj.has_previous %}
+    <a href="?page={{ page_obj.previous_page_number }}">Previous</a>
+    {% endif %}
+    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    {% if page_obj.has_next %}
+    <a href="?page={{ page_obj.next_page_number }}">Next</a>
+    {% endif %}
+</nav>
+{% endif %}
+{% else %}
+<p>You haven't submitted any reports yet.</p>
+{% endif %}
+{% endblock %}

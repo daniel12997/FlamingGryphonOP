@@ -20,6 +20,7 @@ from op.models import (
     HonorImage,
     Recipient,
     Recommendation,
+    Report,
     SiteConfig,
 )
 
@@ -33,6 +34,15 @@ CATEGORY_MAP = {
     "BAR": Honor.Category.BARONIAL,
     "FGCH": Honor.Category.CHAMPION,
     "bfg": Honor.Category.BARONIAL,
+}
+
+# Legacy report status mapping (op_reportStatus IDs to Report.Status values)
+REPORT_STATUS_MAP = {
+    "0": "NEW",
+    "1": "OPEN",
+    "2": "PENDING",
+    "3": "RESOLVED",
+    "4": "CLOSED_NO_RESOLUTION",
 }
 
 # Legacy config keys we care about
@@ -167,6 +177,7 @@ class Command(BaseCommand):
         self._import_configuration(sql_text, verbosity)
         self._import_recommendations(sql_text, honor_lookup, verbosity)
         self._import_recevents(sql_text, verbosity)
+        self._import_reports(sql_text, verbosity)
 
     def _import_groups(self, sql_text, verbosity):
         inserts = extract_inserts(sql_text, "op_groups")
@@ -526,3 +537,35 @@ class Command(BaseCommand):
             self.stdout.write(
                 f"  Recommendation-events: {count} linked, {skipped} skipped"
             )
+
+    def _import_reports(self, sql_text, verbosity):
+        inserts = extract_inserts(sql_text, "op_reports")
+        system_user = self._get_or_create_system_user()
+        count = 0
+
+        for line in inserts:
+            vals = parse_insert_values(line)
+            if len(vals) < 10:
+                continue
+
+            report_id = int(vals[0])
+            status_id = vals[6] or "0"
+            status = REPORT_STATUS_MAP.get(status_id, "NEW")
+
+            Report.objects.get_or_create(
+                pk=report_id,
+                defaults={
+                    "reporter": system_user,
+                    "subject": decode_legacy_text(vals[3]) or "",
+                    "description": decode_legacy_text(vals[4]) or "",
+                    "resolution": decode_legacy_text(vals[5]) or "",
+                    "status": status,
+                    "notify_reporter": vals[7] == "1",
+                    "legacy_reporter_sca_name": decode_legacy_text(vals[1]) or "",
+                    "legacy_reporter_email": decode_legacy_text(vals[2]) or "",
+                },
+            )
+            count += 1
+
+        if verbosity > 0:
+            self.stdout.write(f"  Reports: {count} imported")
