@@ -159,3 +159,11 @@ class ReportStatusForm(forms.Form):
 
     status = forms.ChoiceField(choices=Report.Status.choices)
     resolution = forms.CharField(widget=forms.Textarea, required=False)
+
+
+class CourtListAddForm(forms.Form):
+    """Form for adding a draft bestowal to a court list."""
+
+    recipient = forms.ModelChoiceField(queryset=Recipient.objects.all())
+    honor = forms.ModelChoiceField(queryset=Honor.objects.filter(is_active=True))
+    notes = forms.CharField(required=False, max_length=255)

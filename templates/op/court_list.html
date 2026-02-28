@@ -1,0 +1,33 @@
+<!-- ABOUTME: Admin-only court list event selection page. -->
+<!-- ABOUTME: Shows future events to manage draft bestowals for. -->
+{% extends "base.html" %}
+
+{% block title %}Court List — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Court List Planning</h1>
+<p>Select a future event to manage its court list.</p>
+
+{% if events %}
+<table>
+    <thead>
+        <tr>
+            <th>Event</th>
+            <th>Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for event in events %}
+        <tr>
+            <td>{{ event.name }}</td>
+            <td>{{ event.date }}</td>
+            <td><a href="{% url 'op:court_list_detail' event.pk %}" role="button" class="outline">Manage</a></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No future events found. <a href="{% url 'op:event_create' %}">Create an event</a> first.</p>
+{% endif %}
+{% endblock %}

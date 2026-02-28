@@ -20,6 +20,7 @@ from op.forms import (
     BatchBestovalHeaderForm,
     BatchBestovalRowForm,
     BestovalForm,
+    CourtListAddForm,
     EventForm,
     HonorForm,
     QuickRecipientForm,
@@ -569,3 +570,131 @@ class MyReportsView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return Report.objects.filter(reporter=self.request.user).select_related("reporter")
+
+
+# --- Court List views ---
+
+
+import datetime as _dt
+
+from django.http import JsonResponse
+
+
+class CourtListView(StaffRequiredMixin, ListView):
+    """Select a future event to manage its court list."""
+
+    model = Event
+    template_name = "op/court_list.html"
+    context_object_name = "events"
+
+    def get_queryset(self):
+        return Event.objects.filter(date__gte=_dt.date.today()).order_by("date")
+
+
+class CourtListDetailView(StaffRequiredMixin, DetailView):
+    """View the draft court list for a specific event."""
+
+    model = Event
+    template_name = "op/court_list_detail.html"
+    context_object_name = "event"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["draft_bestowals"] = (
+            self.object.bestowals.filter(is_draft=True)
+            .select_related("recipient", "honor")
+            .order_by("sequence")
+        )
+        context["scheduled_recommendations"] = (
+            Recommendation.objects.filter(
+                scheduled_event=self.object,
+                status=Recommendation.Status.SCHEDULED,
+            ).select_related("honor")
+        )
+        context["add_form"] = CourtListAddForm()
+        return context
+
+
+@login_required
+def court_list_add(request, pk):
+    """Add a draft bestowal to an event's court list."""
+    if not request.user.is_staff:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+
+    event = Event.objects.get(pk=pk)
+    if request.method == "POST":
+        form = CourtListAddForm(request.POST)
+        if form.is_valid():
+            # Set sequence based on existing draft count
+            existing_count = Bestowal.objects.filter(
+                event=event, is_draft=True
+            ).count()
+            Bestowal.objects.create(
+                recipient=form.cleaned_data["recipient"],
+                honor=form.cleaned_data["honor"],
+                notes=form.cleaned_data.get("notes", ""),
+                sort_date=event.date,
+                event=event,
+                is_draft=True,
+                sequence=str(existing_count),
+            )
+            messages.success(request, "Draft bestowal added to court list.")
+    return redirect("op:court_list_detail", pk=pk)
+
+
+@login_required
+def court_list_publish(request, pk):
+    """Publish all draft bestowals for an event, making them public."""
+    if not request.user.is_staff:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+
+    event = Event.objects.get(pk=pk)
+    if request.method == "POST":
+        # Publish all draft bestowals
+        drafts = Bestowal.objects.filter(event=event, is_draft=True)
+        drafts.update(is_draft=False)
+
+        # Update linked scheduled recommendations to GIVEN
+        Recommendation.objects.filter(
+            scheduled_event=event,
+            status=Recommendation.Status.SCHEDULED,
+        ).update(status=Recommendation.Status.GIVEN)
+
+        messages.success(request, "Court list published. Awards are now public.")
+    return redirect("op:court_list_detail", pk=pk)
+
+
+@login_required
+def court_list_reorder(request, pk):
+    """HTMX endpoint to reorder draft bestowals within a court list."""
+    if not request.user.is_staff:
+        from django.http import HttpResponseForbidden
+        return HttpResponseForbidden()
+
+    if request.method == "POST":
+        order_str = request.POST.get("order", "")
+        if order_str:
+            bestowal_ids = [int(x) for x in order_str.split(",") if x.strip()]
+            for i, bestowal_id in enumerate(bestowal_ids):
+                Bestowal.objects.filter(pk=bestowal_id).update(sequence=str(i))
+        return JsonResponse({"status": "ok"})
+    return JsonResponse({"status": "error"}, status=400)
+
+
+class CourtListPrintView(StaffRequiredMixin, DetailView):
+    """Print-friendly view of a court list."""
+
+    model = Event
+    template_name = "op/court_list_print.html"
+    context_object_name = "event"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["bestowals"] = (
+            self.object.bestowals.filter(is_draft=True)
+            .select_related("recipient", "honor")
+            .order_by("sequence")
+        )
+        return context

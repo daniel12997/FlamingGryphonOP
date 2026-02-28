@@ -1,0 +1,53 @@
+<!-- ABOUTME: Print-friendly court list for use at events. -->
+<!-- ABOUTME: Minimal styling, optimized for printing on paper. -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Court List: {{ event.name }}</title>
+    <style>
+        body { font-family: serif; margin: 2cm; }
+        h1 { text-align: center; border-bottom: 2px solid #000; padding-bottom: 0.5em; }
+        h2 { text-align: center; font-weight: normal; }
+        table { width: 100%; border-collapse: collapse; margin-top: 1em; }
+        th, td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #ccc; }
+        th { border-bottom: 2px solid #000; }
+        .notes { font-style: italic; color: #666; }
+        @media print {
+            body { margin: 1cm; }
+            .no-print { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <h1>Court List</h1>
+    <h2>{{ event.name }} — {{ event.date }}</h2>
+
+    {% if bestowals %}
+    <table>
+        <thead>
+            <tr>
+                <th>#</th>
+                <th>Recipient</th>
+                <th>Honor</th>
+                <th>Notes</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for b in bestowals %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ b.recipient.sca_name }}</td>
+                <td>{{ b.honor }}</td>
+                <td class="notes">{{ b.notes }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No bestowals scheduled for this event.</p>
+    {% endif %}
+
+    <p class="no-print"><a href="{% url 'op:court_list_detail' event.pk %}">Back to Court List</a></p>
+</body>
+</html>

@@ -1,0 +1,80 @@
+<!-- ABOUTME: Admin-only court list detail for a specific event. -->
+<!-- ABOUTME: Shows draft bestowals, scheduled recommendations, and allows adding/publishing/reordering. -->
+{% extends "base.html" %}
+
+{% block title %}Court List: {{ event.name }} — Order of Precedence{% endblock %}
+
+{% block content %}
+<h1>Court List: {{ event.name }}</h1>
+<p>{{ event.date }}</p>
+
+<div role="group">
+    <a href="{% url 'op:court_list_print' event.pk %}" role="button" class="outline">Print View</a>
+    <form method="post" action="{% url 'op:court_list_publish' event.pk %}" style="display:inline">
+        {% csrf_token %}
+        <button type="submit" onclick="return confirm('Publish this court list? All draft bestowals will become public.')">Publish Court List</button>
+    </form>
+</div>
+
+<h2>Draft Bestowals</h2>
+{% if draft_bestowals %}
+<table id="court-list-table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Recipient</th>
+            <th>Honor</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for b in draft_bestowals %}
+        <tr data-id="{{ b.pk }}">
+            <td>{{ b.sequence }}</td>
+            <td><a href="{% url 'op:recipient_detail' b.recipient.pk %}">{{ b.recipient.sca_name }}</a></td>
+            <td>{{ b.honor }}</td>
+            <td>{{ b.notes }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No draft bestowals yet.</p>
+{% endif %}
+
+{% if scheduled_recommendations %}
+<h2>Scheduled Recommendations</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Nominee</th>
+            <th>Honor</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rec in scheduled_recommendations %}
+        <tr>
+            <td><a href="{% url 'op:recommendation_detail' rec.pk %}">{{ rec.nominee_sca_name }}</a></td>
+            <td>{{ rec.honor }}</td>
+            <td>{{ rec.get_status_display }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+<h2>Add to Court List</h2>
+<form method="post" action="{% url 'op:court_list_add' event.pk %}">
+    {% csrf_token %}
+    {% for field in add_form %}
+    <label for="{{ field.id_for_label }}">
+        {{ field.label }}
+        {{ field }}
+    </label>
+    {% endfor %}
+    <button type="submit">Add Draft Bestowal</button>
+</form>
+
+<p><a href="{% url 'op:court_list' %}">Back to Court List</a></p>
+{% endblock %}

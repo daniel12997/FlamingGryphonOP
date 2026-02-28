@@ -117,4 +117,34 @@ urlpatterns = [
         views.report_update_status,
         name="report_update_status",
     ),
+    path(
+        "court-list/",
+        views.CourtListView.as_view(),
+        name="court_list",
+    ),
+    path(
+        "court-list/<int:pk>/",
+        views.CourtListDetailView.as_view(),
+        name="court_list_detail",
+    ),
+    path(
+        "court-list/<int:pk>/add/",
+        views.court_list_add,
+        name="court_list_add",
+    ),
+    path(
+        "court-list/<int:pk>/publish/",
+        views.court_list_publish,
+        name="court_list_publish",
+    ),
+    path(
+        "court-list/<int:pk>/reorder/",
+        views.court_list_reorder,
+        name="court_list_reorder",
+    ),
+    path(
+        "court-list/<int:pk>/print/",
+        views.CourtListPrintView.as_view(),
+        name="court_list_print",
+    ),
 ]
