@@ -6,6 +6,7 @@ from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
+from django.views.decorators.http import require_POST
 from django.views.generic import CreateView
 
 from accounts.forms import RegistrationForm
@@ -30,10 +31,10 @@ def pending_users(request):
 
 
 @staff_member_required
+@require_POST
 def approve_user(request, pk):
     user = get_object_or_404(User, pk=pk)
-    if request.method == "POST":
-        user.is_approved = True
-        user.save()
-        messages.success(request, f"User {user.username} has been approved.")
+    user.is_approved = True
+    user.save()
+    messages.success(request, f"User {user.username} has been approved.")
     return redirect("accounts:pending")

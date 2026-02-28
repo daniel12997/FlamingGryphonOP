@@ -6,13 +6,11 @@ from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Count, Q
-from django.shortcuts import render
-from django.urls import reverse, reverse_lazy
-from django.views.generic import CreateView, DetailView, ListView, UpdateView
-
 from django.http import HttpResponse
-
-from django.shortcuts import redirect
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse, reverse_lazy
+from django.views.decorators.http import require_POST
+from django.views.generic import CreateView, DetailView, ListView, UpdateView
 
 from op.forms import (
     AlternateNameFormSet,
@@ -474,6 +472,7 @@ class RecommendationDetailView(StaffRequiredMixin, DetailView):
 
 
 @login_required
+@require_POST
 def recommendation_update_status(request, pk):
     """Admin-only endpoint to update recommendation status."""
     if not request.user.is_staff:
@@ -481,15 +480,14 @@ def recommendation_update_status(request, pk):
 
         return HttpResponseForbidden()
 
-    rec = Recommendation.objects.get(pk=pk)
-    if request.method == "POST":
-        form = RecommendationStatusForm(request.POST)
-        if form.is_valid():
-            rec.status = form.cleaned_data["status"]
-            if form.cleaned_data.get("scheduled_event"):
-                rec.scheduled_event = form.cleaned_data["scheduled_event"]
-            rec.save()
-            messages.success(request, f"Recommendation status updated to {rec.status}.")
+    rec = get_object_or_404(Recommendation, pk=pk)
+    form = RecommendationStatusForm(request.POST)
+    if form.is_valid():
+        rec.status = form.cleaned_data["status"]
+        if form.cleaned_data.get("scheduled_event"):
+            rec.scheduled_event = form.cleaned_data["scheduled_event"]
+        rec.save()
+        messages.success(request, f"Recommendation status updated to {rec.status}.")
     return redirect("op:recommendation_detail", pk=pk)
 
 
@@ -544,6 +542,7 @@ class ReportDetailView(StaffRequiredMixin, DetailView):
 
 
 @login_required
+@require_POST
 def report_update_status(request, pk):
     """Admin-only endpoint to update report status and resolution."""
     if not request.user.is_staff:
@@ -551,14 +550,13 @@ def report_update_status(request, pk):
 
         return HttpResponseForbidden()
 
-    report = Report.objects.get(pk=pk)
-    if request.method == "POST":
-        form = ReportStatusForm(request.POST)
-        if form.is_valid():
-            report.status = form.cleaned_data["status"]
-            report.resolution = form.cleaned_data.get("resolution", "")
-            report.save()
-            messages.success(request, f"Report status updated to {report.get_status_display()}.")
+    report = get_object_or_404(Report, pk=pk)
+    form = ReportStatusForm(request.POST)
+    if form.is_valid():
+        report.status = form.cleaned_data["status"]
+        report.resolution = form.cleaned_data.get("resolution", "")
+        report.save()
+        messages.success(request, f"Report status updated to {report.get_status_display()}.")
     return redirect("op:report_detail", pk=pk)
 
 
@@ -616,71 +614,77 @@ class CourtListDetailView(StaffRequiredMixin, DetailView):
 
 
 @login_required
+@require_POST
 def court_list_add(request, pk):
     """Add a draft bestowal to an event's court list."""
     if not request.user.is_staff:
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden()
 
-    event = Event.objects.get(pk=pk)
-    if request.method == "POST":
-        form = CourtListAddForm(request.POST)
-        if form.is_valid():
-            # Set sequence based on existing draft count
-            existing_count = Bestowal.objects.filter(
-                event=event, is_draft=True
-            ).count()
-            Bestowal.objects.create(
-                recipient=form.cleaned_data["recipient"],
-                honor=form.cleaned_data["honor"],
-                notes=form.cleaned_data.get("notes", ""),
-                sort_date=event.date,
-                event=event,
-                is_draft=True,
-                sequence=str(existing_count),
-            )
-            messages.success(request, "Draft bestowal added to court list.")
+    event = get_object_or_404(Event, pk=pk)
+    form = CourtListAddForm(request.POST)
+    if form.is_valid():
+        # Set sequence based on existing draft count
+        existing_count = Bestowal.objects.filter(
+            event=event, is_draft=True
+        ).count()
+        Bestowal.objects.create(
+            recipient=form.cleaned_data["recipient"],
+            honor=form.cleaned_data["honor"],
+            notes=form.cleaned_data.get("notes", ""),
+            sort_date=event.date,
+            event=event,
+            is_draft=True,
+            sequence=str(existing_count),
+        )
+        messages.success(request, "Draft bestowal added to court list.")
     return redirect("op:court_list_detail", pk=pk)
 
 
 @login_required
+@require_POST
 def court_list_publish(request, pk):
     """Publish all draft bestowals for an event, making them public."""
     if not request.user.is_staff:
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden()
 
-    event = Event.objects.get(pk=pk)
-    if request.method == "POST":
-        # Publish all draft bestowals
-        drafts = Bestowal.objects.filter(event=event, is_draft=True)
-        drafts.update(is_draft=False)
+    event = get_object_or_404(Event, pk=pk)
+    # Publish all draft bestowals
+    drafts = Bestowal.objects.filter(event=event, is_draft=True)
+    drafts.update(is_draft=False)
 
-        # Update linked scheduled recommendations to GIVEN
-        Recommendation.objects.filter(
-            scheduled_event=event,
-            status=Recommendation.Status.SCHEDULED,
-        ).update(status=Recommendation.Status.GIVEN)
+    # Update linked scheduled recommendations to GIVEN
+    Recommendation.objects.filter(
+        scheduled_event=event,
+        status=Recommendation.Status.SCHEDULED,
+    ).update(status=Recommendation.Status.GIVEN)
 
-        messages.success(request, "Court list published. Awards are now public.")
+    messages.success(request, "Court list published. Awards are now public.")
     return redirect("op:court_list_detail", pk=pk)
 
 
 @login_required
+@require_POST
 def court_list_reorder(request, pk):
     """HTMX endpoint to reorder draft bestowals within a court list."""
     if not request.user.is_staff:
         from django.http import HttpResponseForbidden
         return HttpResponseForbidden()
 
-    if request.method == "POST":
-        order_str = request.POST.get("order", "")
-        if order_str:
+    event = get_object_or_404(Event, pk=pk)
+    order_str = request.POST.get("order", "")
+    if order_str:
+        try:
             bestowal_ids = [int(x) for x in order_str.split(",") if x.strip()]
-            for i, bestowal_id in enumerate(bestowal_ids):
-                Bestowal.objects.filter(pk=bestowal_id).update(sequence=str(i))
-        return JsonResponse({"status": "ok"})
-    return JsonResponse({"status": "error"}, status=400)
+        except ValueError:
+            return JsonResponse({"status": "error", "detail": "invalid ids"}, status=400)
+        # Only update bestowals that belong to this event's draft court list
+        for i, bestowal_id in enumerate(bestowal_ids):
+            Bestowal.objects.filter(
+                pk=bestowal_id, event=event, is_draft=True
+            ).update(sequence=str(i))
+    return JsonResponse({"status": "ok"})
 
 
 class CourtListPrintView(StaffRequiredMixin, DetailView):

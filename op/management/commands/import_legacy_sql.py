@@ -403,7 +403,9 @@ class Command(BaseCommand):
                 binary_data = bytes.fromhex(hex_data[2:])
                 badge_dir = os.path.join(settings.MEDIA_ROOT, "badges")
                 os.makedirs(badge_dir, exist_ok=True)
-                filepath = os.path.join(badge_dir, filename)
+                # Sanitize filename to prevent path traversal
+                safe_filename = os.path.basename(filename)
+                filepath = os.path.join(badge_dir, safe_filename)
                 with open(filepath, "wb") as f:
                     f.write(binary_data)
 

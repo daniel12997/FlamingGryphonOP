@@ -23,8 +23,8 @@ services:
     depends_on:
       - db
     environment:
-      SECRET_KEY: dev-secret-key-not-for-production
-      DEBUG: "True"
+      SECRET_KEY: ${SECRET_KEY:-dev-secret-key-not-for-production}
+      DEBUG: ${DEBUG:-True}
       ALLOWED_HOSTS: localhost,127.0.0.1
       POSTGRES_DB: gryphon_op
       POSTGRES_USER: gryphon
