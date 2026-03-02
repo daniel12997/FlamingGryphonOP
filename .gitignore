@@ -34,3 +34,6 @@ htmlcov/
 
 # uv
 .python-version
+
+# Claude Code context (local only, not for repo)
+CLAUDE.md
