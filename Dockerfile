@@ -27,9 +27,11 @@ COPY --from=builder /app/.venv /app/.venv
 
 COPY . /app
 
-# SECRET_KEY is required by settings even for collectstatic; use a build-time
-# placeholder that is never persisted as an ENV var in the final image.
-RUN SECRET_KEY=build-time-placeholder uv run python manage.py collectstatic --noinput
+# Give the app user write access to staticfiles (populated at container start)
+RUN mkdir -p /app/staticfiles && chown app:app /app/staticfiles
+
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
 USER app
 
@@ -37,4 +39,4 @@ ENV PATH="/app/.venv/bin:$PATH"
 
 EXPOSE 8000
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+ENTRYPOINT ["/entrypoint.sh"]

@@ -47,14 +47,13 @@ docker compose -f docker-compose.prod.yml up -d
 
 > Alternatively, if you want to build from source: `docker compose up -d` (uses `docker-compose.yml` which builds locally).
 
-### 5. Run migrations and create a superuser
+### 5. Create a superuser
+
+Migrations and static file collection run automatically on container start. Just create the superuser:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec web uv run python manage.py migrate
 docker compose -f docker-compose.prod.yml exec web uv run python manage.py createsuperuser
 ```
-
-Static files are collected automatically during the Docker image build — no separate `collectstatic` step needed.
 
 ### 6. Configure the site for your group
 
@@ -92,8 +91,9 @@ Every push to `master` publishes a new `latest` image. To update your server:
 ```bash
 docker compose -f docker-compose.prod.yml pull
 docker compose -f docker-compose.prod.yml up -d
-docker compose -f docker-compose.prod.yml exec web uv run python manage.py migrate
 ```
+
+Migrations run automatically on startup.
 
 To pin to a specific release instead of `latest`, edit `docker-compose.prod.yml` and change the image tag to a version tag (e.g. `ghcr.io/daniel12997/flaminggryphonop:v1.2.3`).
 
