@@ -2,6 +2,8 @@
 
 A Django web application for tracking the Order of Precedence (OP) of the Barony of the Flaming Gryphon, a chapter of the Society for Creative Anachronism (SCA) in the Middle Kingdom. Manages members, awards/honors, bestowals, recommendations, error reports, and event history, with data spanning from 1970 to present.
 
+**→ [Getting Started](GETTING_STARTED.md)** — deploy the app or set up a local dev environment
+
 ## Table of Contents
 
 - [For Users](#for-users)
@@ -50,68 +52,9 @@ The Order of Precedence tracks which awards and honors have been given to member
 
 ### Deployment
 
-#### Prerequisites
+See **[Getting Started → Deploying the App](GETTING_STARTED.md#deploying-the-app)** for the full setup walkthrough, including Docker deployment, environment variables, reverse proxy configuration, and data loading (both legacy migration and fresh start).
 
-- Docker and Docker Compose (recommended), OR:
-- Python 3.12+, PostgreSQL 16+, and [uv](https://docs.astral.sh/uv/)
-
-#### Docker Deployment
-
-```bash
-# Clone the repository
-git clone <repo-url> && cd WH_op
-
-# Create a .env file with production values
-cat > .env <<EOF
-SECRET_KEY=your-long-random-secret-key-here
-DEBUG=False
-ALLOWED_HOSTS=your-domain.example.com
-POSTGRES_DB=gryphon_op
-POSTGRES_USER=gryphon
-POSTGRES_PASSWORD=a-strong-database-password
-EOF
-
-# Build and start
-docker compose up -d
-
-# Run migrations
-docker compose exec web uv run python manage.py migrate
-
-# Create a superuser
-docker compose exec web uv run python manage.py createsuperuser
-
-# Import legacy data (if migrating from the old PHP system)
-docker compose exec web uv run python manage.py import_legacy_sql legacy_data/gryphony_OP.sql
-```
-
-The app runs on port 8000 by default. Put a reverse proxy (nginx, caddy) in front for HTTPS.
-
-#### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `SECRET_KEY` | Yes (prod) | dev placeholder | Django secret key |
-| `DEBUG` | No | `False` | Set to `True` for local development |
-| `ALLOWED_HOSTS` | Yes (prod) | `localhost,127.0.0.1` | Comma-separated hostnames |
-| `POSTGRES_DB` | No | `gryphon_op` | Database name |
-| `POSTGRES_USER` | No | `gryphon` | Database user |
-| `POSTGRES_PASSWORD` | No | `gryphon` | Database password |
-| `POSTGRES_HOST` | No | `localhost` | Database host (`db` in Docker) |
-| `POSTGRES_PORT` | No | `5432` | Database port |
-
-#### Importing Legacy Data
-
-If migrating from the old PHP/MySQL system:
-
-```bash
-# Unzip the SQL dump
-unzip gryphony_OP.sql.zip -d legacy_data/
-
-# Run the import
-uv run python manage.py import_legacy_sql legacy_data/gryphony_OP.sql
-```
-
-The import handles:
+The import command handles:
 - Groups, honors, recipients, alternate names, events, bestowals
 - Honor images (extracted from BLOBs to files)
 - Site configuration
@@ -223,31 +166,7 @@ WH_op/
 
 ### Local Development Setup
 
-```bash
-# Install dependencies
-uv sync
-
-# Start PostgreSQL (via Docker or local install)
-docker compose up db -d
-
-# Run migrations (DEBUG defaults to False; set it for local dev)
-DEBUG=True uv run python manage.py migrate
-
-# Create a superuser
-DEBUG=True uv run python manage.py createsuperuser
-
-# Run the dev server
-DEBUG=True uv run python manage.py runserver
-
-# Or use Docker for everything (DEBUG=True set in docker-compose.yml)
-docker compose up
-```
-
-### Troubleshooting
-
-**Port 5432 already in use:** If you already have a local PostgreSQL service running, `docker compose up db -d` will fail with a bind error. Either stop your local Postgres (`sudo systemctl stop postgresql`), or change the host port in `docker-compose.yml` (e.g., `"5433:5432"`) and set `POSTGRES_PORT=5433` in your environment.
-
-**`RuntimeError: SECRET_KEY must be set`:** The `DEBUG` env var defaults to `False`, which requires a real `SECRET_KEY`. For local development, set `DEBUG=True` in your environment or in a `.env` file.
+See **[Getting Started → Local Development Setup](GETTING_STARTED.md#local-development-setup)** for the full walkthrough.
 
 ### Running Tests
 
