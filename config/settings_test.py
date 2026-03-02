@@ -9,6 +9,9 @@ os.environ.setdefault("DEBUG", "True")
 
 from .settings import *  # noqa: F401, F403
 
+# Remove WhiteNoise middleware in tests to suppress "No directory at: staticfiles/" warnings
+MIDDLEWARE = [m for m in MIDDLEWARE if m != "whitenoise.middleware.WhiteNoiseMiddleware"]  # noqa: F405
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.sqlite3",

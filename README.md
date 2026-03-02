@@ -91,7 +91,7 @@ The app runs on port 8000 by default. Put a reverse proxy (nginx, caddy) in fron
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `SECRET_KEY` | Yes (prod) | dev placeholder | Django secret key |
-| `DEBUG` | No | `True` | Set to `False` in production |
+| `DEBUG` | No | `False` | Set to `True` for local development |
 | `ALLOWED_HOSTS` | Yes (prod) | `localhost,127.0.0.1` | Comma-separated hostnames |
 | `POSTGRES_DB` | No | `gryphon_op` | Database name |
 | `POSTGRES_USER` | No | `gryphon` | Database user |
@@ -230,18 +230,24 @@ uv sync
 # Start PostgreSQL (via Docker or local install)
 docker compose up db -d
 
-# Run migrations
-uv run python manage.py migrate
+# Run migrations (DEBUG defaults to False; set it for local dev)
+DEBUG=True uv run python manage.py migrate
 
 # Create a superuser
-uv run python manage.py createsuperuser
+DEBUG=True uv run python manage.py createsuperuser
 
 # Run the dev server
-uv run python manage.py runserver
+DEBUG=True uv run python manage.py runserver
 
-# Or use Docker for everything
+# Or use Docker for everything (DEBUG=True set in docker-compose.yml)
 docker compose up
 ```
+
+### Troubleshooting
+
+**Port 5432 already in use:** If you already have a local PostgreSQL service running, `docker compose up db -d` will fail with a bind error. Either stop your local Postgres (`sudo systemctl stop postgresql`), or change the host port in `docker-compose.yml` (e.g., `"5433:5432"`) and set `POSTGRES_PORT=5433` in your environment.
+
+**`RuntimeError: SECRET_KEY must be set`:** The `DEBUG` env var defaults to `False`, which requires a real `SECRET_KEY`. For local development, set `DEBUG=True` in your environment or in a `.env` file.
 
 ### Running Tests
 
