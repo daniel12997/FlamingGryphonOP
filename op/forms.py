@@ -1,6 +1,8 @@
 # ABOUTME: Forms for the op app CRUD views.
 # ABOUTME: ModelForms for Recipient, Honor, Event, Bestowal, and inline formsets.
 
+from typing import Any
+
 from django import forms
 from django.forms import formset_factory, inlineformset_factory
 
@@ -31,7 +33,7 @@ class RecipientForm(forms.ModelForm):
         ]
 
 
-AlternateNameFormSet = inlineformset_factory(
+AlternateNameFormSet: Any = inlineformset_factory(
     Recipient,
     AlternateName,
     fields=["name", "is_nickname", "is_former_name", "is_registered"],
@@ -128,10 +130,10 @@ class RecommendationForm(forms.ModelForm):
             "justification",
         ]
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
         # Only show honors that accept recommendations
-        self.fields["honor"].queryset = Honor.objects.filter(
+        self.fields["honor"].queryset = Honor.objects.filter(  # type: ignore[attr-defined]
             accepts_recommendations=True, is_active=True
         )
 

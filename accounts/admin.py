@@ -12,9 +12,9 @@ User = get_user_model()
 class UserAdmin(BaseUserAdmin):
     list_display = ("username", "email", "sca_name", "is_approved", "is_staff")
     list_filter = ("is_approved", "is_staff", "is_active")
-    fieldsets = BaseUserAdmin.fieldsets + (
+    fieldsets = (BaseUserAdmin.fieldsets or ()) + (  # type: ignore[operator]
         ("SCA Info", {"fields": ("sca_name", "is_approved")}),
     )
-    add_fieldsets = BaseUserAdmin.add_fieldsets + (
+    add_fieldsets = (BaseUserAdmin.add_fieldsets or ()) + (
         ("SCA Info", {"fields": ("sca_name",)}),
     )

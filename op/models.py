@@ -1,6 +1,8 @@
 # ABOUTME: Models for the op (Order of Precedence) app.
 # ABOUTME: Core domain: recipients, honors, bestowals, events, groups, recommendations, site config.
 
+from typing import Any
+
 from django.conf import settings
 from django.db import models
 
@@ -24,16 +26,16 @@ class SiteConfig(models.Model):
         verbose_name = "Site Configuration"
         verbose_name_plural = "Site Configuration"
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Site Config: {self.group_name_short}"
 
-    def save(self, *args, **kwargs):
+    def save(self, *args: Any, **kwargs: Any) -> None:
         # Enforce singleton: always use pk=1
         self.pk = 1
         super().save(*args, **kwargs)
 
     @classmethod
-    def load(cls):
+    def load(cls) -> "SiteConfig":
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
 
@@ -51,7 +53,7 @@ class Group(models.Model):
     class Meta:
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.designator:
             return f"{self.designator} {self.name}"
         return self.name
@@ -83,7 +85,7 @@ class Recipient(models.Model):
     class Meta:
         ordering = ["sca_name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.sca_name
 
 
@@ -101,7 +103,7 @@ class AlternateName(models.Model):
     class Meta:
         ordering = ["name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} ({self.recipient.sca_name})"
 
 
@@ -140,7 +142,7 @@ class Honor(models.Model):
     class Meta:
         ordering = ["-level", "name"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.prefix:
             return f"{self.prefix} {self.name}"
         return self.name
@@ -152,7 +154,7 @@ class HonorImage(models.Model):
     honor = models.ForeignKey(Honor, on_delete=models.CASCADE, related_name="images")
     image = models.ImageField(upload_to="badges/")
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Image for {self.honor.name}"
 
 
@@ -165,7 +167,7 @@ class Event(models.Model):
     class Meta:
         ordering = ["-date"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.name} ({self.date})"
 
 
@@ -207,7 +209,7 @@ class Bestowal(models.Model):
     class Meta:
         ordering = ["sort_date", "sequence"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.recipient.sca_name} — {self.honor} ({self.sort_date})"
 
 
@@ -264,7 +266,7 @@ class Recommendation(models.Model):
     class Meta:
         ordering = ["-submitted_date"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.nominee_sca_name} for {self.honor} ({self.status})"
 
 
@@ -301,5 +303,5 @@ class Report(models.Model):
     class Meta:
         ordering = ["-created_date"]
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"{self.subject} ({self.status})"

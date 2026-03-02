@@ -286,7 +286,7 @@ class TestImportCommand:
         self._run_import()
         assert Event.objects.count() == 1
         e = Event.objects.first()
-        assert e.name == "Push for Pennsic"
+        assert e.name == "Push for Pennsic"  # type: ignore[union-attr]
 
     def test_imports_bestowals(self):
         self._run_import()

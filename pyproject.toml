@@ -38,11 +38,27 @@ module = "*.migrations.*"
 ignore_errors = true
 
 [[tool.mypy.overrides]]
-module = ["op.tests*", "accounts.tests*", "conftest"]
+module = "op.management.commands.*"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = [
+    "op.tests",
+    "op.tests_crud",
+    "op.tests_views",
+    "op.tests_recommendations",
+    "op.tests_reports",
+    "op.tests_import",
+    "op.tests_polish",
+    "op.tests_awards_events",
+    "op.tests_courtlist",
+    "accounts.tests",
+    "conftest",
+]
 disallow_untyped_defs = false
 
 [tool.django-stubs]
-django_settings_module = "config.settings"
+django_settings_module = "config.settings_test"
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "config.settings_test"

@@ -604,6 +604,28 @@ After all steps:
 8. `uv run pytest` — all tests pass
 9. `uv run python manage.py check --deploy` — no deployment warnings
 
+### Step 12: Type Safety with mypy + django-stubs
+
+Add mypy type checking with django-stubs for static type safety across the codebase.
+
+```text
+1. Install mypy, django-stubs, django-stubs-ext as dev dependencies
+2. Configure mypy in pyproject.toml with django plugin
+3. Add type hints to all source files:
+   - op/models.py: __str__ -> str, save() args, classmethod returns
+   - op/views.py: HttpRequest params, HttpResponse returns, CBV method signatures
+   - op/forms.py: __init__ methods, clean methods
+   - op/admin.py: minimal typing
+   - op/context_processors.py: function signature
+   - accounts/models.py, views.py, forms.py, backends.py: full typing
+4. Exclude test files from strict disallow_untyped_defs
+5. Run mypy clean, verify all tests still pass
+
+Commit: "feat: add mypy + django-stubs type checking"
+```
+
+---
+
 ## Future Work (not in scope for initial build)
 
 - **Kingdom honor backfill**: Obtain a local copy of the Midrealm Kingdom OP data (from https://midrealm.org/order-of-precedence/) and use it to replace "External Honor #<key>" placeholders with real award names. Set up periodic sync.

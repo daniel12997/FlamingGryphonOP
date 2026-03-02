@@ -14,7 +14,7 @@ class User(AbstractUser):
         help_text="Users cannot log in until approved by an admin.",
     )
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.sca_name:
             return f"{self.username} ({self.sca_name})"
         return self.username

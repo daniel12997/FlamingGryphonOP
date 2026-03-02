@@ -4,6 +4,7 @@
 from django.contrib import messages
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth import get_user_model
+from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse_lazy
 from django.views.decorators.http import require_POST
@@ -20,19 +21,19 @@ class RegisterView(CreateView):
     success_url = reverse_lazy("accounts:register_success")
 
 
-def register_success(request):
+def register_success(request: HttpRequest) -> HttpResponse:
     return render(request, "accounts/register_success.html")
 
 
 @staff_member_required
-def pending_users(request):
+def pending_users(request: HttpRequest) -> HttpResponse:
     users = User.objects.filter(is_approved=False, is_active=True)
     return render(request, "accounts/pending.html", {"pending_users": users})
 
 
 @staff_member_required
 @require_POST
-def approve_user(request, pk):
+def approve_user(request: HttpRequest, pk: int) -> HttpResponseRedirect:
     user = get_object_or_404(User, pk=pk)
     user.is_approved = True
     user.save()

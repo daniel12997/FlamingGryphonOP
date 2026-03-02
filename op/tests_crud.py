@@ -121,7 +121,7 @@ class TestRecipientCRUD:
         assert response.status_code == 302
         r = Recipient.objects.get(sca_name="Ulf the Tall")
         assert r.alternate_names.count() == 1
-        assert r.alternate_names.first().name == "Ulf Bearslayer"
+        assert r.alternate_names.first().name == "Ulf Bearslayer"  # type: ignore[union-attr]
 
     def test_edit_recipient_requires_login(self, client, sample_recipient):
         response = client.get(

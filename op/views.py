@@ -1,12 +1,15 @@
 # ABOUTME: Views for the op (Order of Precedence) app.
 # ABOUTME: Handles public browsing and authenticated management of OP data.
 
+import datetime as _dt
+from typing import Any
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Count, Q
-from django.http import HttpResponse
+from django.db.models import Count, Q, QuerySet
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
 from django.views.decorators.http import require_POST
@@ -31,7 +34,7 @@ from op.forms import (
 from op.models import AlternateName, Bestowal, Event, Honor, Recipient, Recommendation, Report
 
 
-def index(request):
+def index(request: HttpRequest) -> HttpResponse:
     recent_bestowals = (
         Bestowal.objects.filter(is_draft=False)
         .select_related("recipient", "honor")
@@ -46,7 +49,7 @@ class RecipientListView(ListView):
     context_object_name = "recipients"
     paginate_by = 25
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Recipient]:
         qs = super().get_queryset()
         q = self.request.GET.get("q", "").strip()
         if q:
@@ -57,7 +60,7 @@ class RecipientListView(ListView):
             ).distinct()
         return qs
 
-    def get_template_names(self):
+    def get_template_names(self) -> list[str]:
         if self.request.headers.get("HX-Request"):
             return ["op/recipient_list_partial.html"]
         return [self.template_name]
@@ -68,7 +71,7 @@ class RecipientDetailView(DetailView):
     template_name = "op/recipient_detail.html"
     context_object_name = "recipient"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["bestowals"] = (
             self.object.bestowals.filter(is_draft=False)
@@ -84,12 +87,12 @@ class HonorListView(ListView):
     template_name = "op/honor_list.html"
     context_object_name = "honors"
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Honor]:
         return Honor.objects.annotate(
             recipient_count=Count("bestowals", filter=Q(bestowals__is_draft=False))
         )
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         honors = context["honors"]
         context["baronial_honors"] = [h for h in honors if h.category == Honor.Category.BARONIAL]
@@ -103,7 +106,7 @@ class HonorDetailView(DetailView):
     template_name = "op/honor_detail.html"
     context_object_name = "honor"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["bestowals"] = (
             self.object.bestowals.filter(is_draft=False)
@@ -125,7 +128,7 @@ class EventDetailView(DetailView):
     template_name = "op/event_detail.html"
     context_object_name = "event"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["bestowals"] = (
             self.object.bestowals.filter(is_draft=False)
@@ -152,7 +155,7 @@ class EventUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     template_name = "op/event_form.html"
     success_message = "Event updated successfully."
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse("op:event_detail", args=[self.object.pk])
 
 
@@ -162,7 +165,7 @@ class RecipientCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     template_name = "op/recipient_form.html"
     success_message = "Recipient created successfully."
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         if self.request.POST:
             context["altname_formset"] = AlternateNameFormSet(
@@ -174,7 +177,7 @@ class RecipientCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
             )
         return context
 
-    def form_valid(self, form):
+    def form_valid(self, form: RecipientForm) -> HttpResponse:
         context = self.get_context_data()
         formset = context["altname_formset"]
         if formset.is_valid():
@@ -185,8 +188,8 @@ class RecipientCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
             return super(CreateView, self).form_valid(form)
         return self.form_invalid(form)
 
-    def get_success_url(self):
-        return reverse("op:recipient_detail", args=[self.object.pk])
+    def get_success_url(self) -> str:
+        return reverse("op:recipient_detail", args=[self.object.pk])  # type: ignore[union-attr]
 
 
 class RecipientUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
@@ -195,7 +198,7 @@ class RecipientUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     template_name = "op/recipient_form.html"
     success_message = "Recipient updated successfully."
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         if self.request.POST:
             context["altname_formset"] = AlternateNameFormSet(
@@ -207,7 +210,7 @@ class RecipientUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
             )
         return context
 
-    def form_valid(self, form):
+    def form_valid(self, form: RecipientForm) -> HttpResponse:
         context = self.get_context_data()
         formset = context["altname_formset"]
         if formset.is_valid():
@@ -218,12 +221,12 @@ class RecipientUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
             return super(UpdateView, self).form_valid(form)
         return self.form_invalid(form)
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse("op:recipient_detail", args=[self.object.pk])
 
 
 @login_required
-def recipient_duplicate_check(request):
+def recipient_duplicate_check(request: HttpRequest) -> HttpResponse:
     """HTMX endpoint: returns partial with similar existing recipients."""
     from difflib import SequenceMatcher
 
@@ -256,8 +259,11 @@ def recipient_duplicate_check(request):
 class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
     """Mixin that requires the user to be staff."""
 
-    def test_func(self):
-        return self.request.user.is_staff
+    # request is provided by View at runtime; declared here for type checkers
+    request: HttpRequest
+
+    def test_func(self) -> bool:
+        return bool(self.request.user.is_staff)
 
 
 class HonorCreateView(StaffRequiredMixin, SuccessMessageMixin, CreateView):
@@ -274,7 +280,7 @@ class HonorUpdateView(StaffRequiredMixin, SuccessMessageMixin, UpdateView):
     template_name = "op/honor_form.html"
     success_message = "Honor updated successfully."
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse("op:honor_detail", args=[self.object.pk])
 
 
@@ -284,7 +290,7 @@ class BestovalCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     template_name = "op/bestowal_form.html"
     success_message = "Bestowal created successfully."
 
-    def get_initial(self):
+    def get_initial(self) -> dict[str, Any]:
         initial = super().get_initial()
         if "recipient" in self.request.GET:
             initial["recipient"] = self.request.GET["recipient"]
@@ -292,7 +298,7 @@ class BestovalCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
             initial["event"] = self.request.GET["event"]
         return initial
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         # Pre-populate recipient display name for the autocomplete field
         recipient_pk = self.request.GET.get("recipient") or self.request.POST.get(
@@ -305,8 +311,8 @@ class BestovalCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
                 pass
         return context
 
-    def get_success_url(self):
-        return reverse("op:recipient_detail", args=[self.object.recipient.pk])
+    def get_success_url(self) -> str:
+        return reverse("op:recipient_detail", args=[self.object.recipient.pk])  # type: ignore[union-attr]
 
 
 class BestovalUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
@@ -315,17 +321,17 @@ class BestovalUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     template_name = "op/bestowal_form.html"
     success_message = "Bestowal updated successfully."
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["prefilled_recipient"] = self.object.recipient
         return context
 
-    def get_success_url(self):
+    def get_success_url(self) -> str:
         return reverse("op:recipient_detail", args=[self.object.recipient.pk])
 
 
 @login_required
-def recipient_autocomplete(request):
+def recipient_autocomplete(request: HttpRequest) -> HttpResponse:
     """HTMX endpoint returning recipient search results for autocomplete."""
     q = request.GET.get("q", "").strip()
     if len(q) < 2:
@@ -348,7 +354,7 @@ def recipient_autocomplete(request):
 
 
 @login_required
-def recipient_quick_create(request):
+def recipient_quick_create(request: HttpRequest) -> HttpResponse:
     """HTMX endpoint for inline recipient creation from bestowal form."""
     if request.method == "POST":
         form = QuickRecipientForm(request.POST)
@@ -369,7 +375,7 @@ def recipient_quick_create(request):
 
 
 @login_required
-def batch_bestowal(request):
+def batch_bestowal(request: HttpRequest) -> HttpResponse:
     """Record Court: create multiple bestowals for a single event/date."""
     if request.method == "POST":
         header_form = BatchBestovalHeaderForm(request.POST)
@@ -407,7 +413,7 @@ def batch_bestowal(request):
 
 
 @login_required
-def batch_add_row(request):
+def batch_add_row(request: HttpRequest) -> HttpResponse:
     """HTMX endpoint: returns a new empty formset row."""
     form_index = request.GET.get("form_index", "0")
     form = BatchBestovalRowForm(prefix=f"form-{form_index}")
@@ -428,7 +434,7 @@ class RecommendationCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateVi
     success_url = reverse_lazy("op:index")
     success_message = "Recommendation submitted successfully."
 
-    def form_valid(self, form):
+    def form_valid(self, form: RecommendationForm) -> HttpResponse:
         form.instance.recommender = self.request.user
         return super().form_valid(form)
 
@@ -439,7 +445,7 @@ class RecommendationListView(StaffRequiredMixin, ListView):
     context_object_name = "recommendations"
     paginate_by = 25
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Recommendation]:
         qs = super().get_queryset().select_related("honor", "recommender")
         status = self.request.GET.get("status")
         if status:
@@ -449,7 +455,7 @@ class RecommendationListView(StaffRequiredMixin, ListView):
             qs = qs.filter(honor_id=honor_pk)
         return qs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["status_choices"] = Recommendation.Status.choices
         return context
@@ -460,7 +466,7 @@ class RecommendationDetailView(StaffRequiredMixin, DetailView):
     template_name = "op/recommendation_detail.html"
     context_object_name = "recommendation"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["status_form"] = RecommendationStatusForm(
             initial={
@@ -473,7 +479,7 @@ class RecommendationDetailView(StaffRequiredMixin, DetailView):
 
 @login_required
 @require_POST
-def recommendation_update_status(request, pk):
+def recommendation_update_status(request: HttpRequest, pk: int) -> HttpResponse:
     """Admin-only endpoint to update recommendation status."""
     if not request.user.is_staff:
         from django.http import HttpResponseForbidden
@@ -501,7 +507,7 @@ class ReportCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
     success_url = reverse_lazy("op:my_reports")
     success_message = "Report submitted successfully."
 
-    def form_valid(self, form):
+    def form_valid(self, form: ReportForm) -> HttpResponse:
         form.instance.reporter = self.request.user
         return super().form_valid(form)
 
@@ -512,14 +518,14 @@ class ReportListView(StaffRequiredMixin, ListView):
     context_object_name = "reports"
     paginate_by = 25
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Report]:
         qs = super().get_queryset().select_related("reporter")
         status = self.request.GET.get("status")
         if status:
             qs = qs.filter(status=status)
         return qs
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["status_choices"] = Report.Status.choices
         return context
@@ -530,7 +536,7 @@ class ReportDetailView(StaffRequiredMixin, DetailView):
     template_name = "op/report_detail.html"
     context_object_name = "report"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["status_form"] = ReportStatusForm(
             initial={
@@ -543,7 +549,7 @@ class ReportDetailView(StaffRequiredMixin, DetailView):
 
 @login_required
 @require_POST
-def report_update_status(request, pk):
+def report_update_status(request: HttpRequest, pk: int) -> HttpResponse:
     """Admin-only endpoint to update report status and resolution."""
     if not request.user.is_staff:
         from django.http import HttpResponseForbidden
@@ -566,16 +572,13 @@ class MyReportsView(LoginRequiredMixin, ListView):
     context_object_name = "reports"
     paginate_by = 25
 
-    def get_queryset(self):
-        return Report.objects.filter(reporter=self.request.user).select_related("reporter")
+    def get_queryset(self) -> QuerySet[Report]:
+        return Report.objects.filter(
+            reporter=self.request.user  # type: ignore[misc]
+        ).select_related("reporter")
 
 
 # --- Court List views ---
-
-
-import datetime as _dt
-
-from django.http import JsonResponse
 
 
 class CourtListView(StaffRequiredMixin, ListView):
@@ -585,7 +588,7 @@ class CourtListView(StaffRequiredMixin, ListView):
     template_name = "op/court_list.html"
     context_object_name = "events"
 
-    def get_queryset(self):
+    def get_queryset(self) -> QuerySet[Event]:
         return Event.objects.filter(date__gte=_dt.date.today()).order_by("date")
 
 
@@ -596,7 +599,7 @@ class CourtListDetailView(StaffRequiredMixin, DetailView):
     template_name = "op/court_list_detail.html"
     context_object_name = "event"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["draft_bestowals"] = (
             self.object.bestowals.filter(is_draft=True)
@@ -615,7 +618,7 @@ class CourtListDetailView(StaffRequiredMixin, DetailView):
 
 @login_required
 @require_POST
-def court_list_add(request, pk):
+def court_list_add(request: HttpRequest, pk: int) -> HttpResponse:
     """Add a draft bestowal to an event's court list."""
     if not request.user.is_staff:
         from django.http import HttpResponseForbidden
@@ -643,7 +646,7 @@ def court_list_add(request, pk):
 
 @login_required
 @require_POST
-def court_list_publish(request, pk):
+def court_list_publish(request: HttpRequest, pk: int) -> HttpResponse:
     """Publish all draft bestowals for an event, making them public."""
     if not request.user.is_staff:
         from django.http import HttpResponseForbidden
@@ -666,7 +669,7 @@ def court_list_publish(request, pk):
 
 @login_required
 @require_POST
-def court_list_reorder(request, pk):
+def court_list_reorder(request: HttpRequest, pk: int) -> HttpResponse:
     """HTMX endpoint to reorder draft bestowals within a court list."""
     if not request.user.is_staff:
         from django.http import HttpResponseForbidden
@@ -694,7 +697,7 @@ class CourtListPrintView(StaffRequiredMixin, DetailView):
     template_name = "op/court_list_print.html"
     context_object_name = "event"
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         context["bestowals"] = (
             self.object.bestowals.filter(is_draft=True)
