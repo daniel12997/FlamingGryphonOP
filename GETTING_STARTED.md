@@ -14,13 +14,14 @@ Two paths: **deploying the app** (production or staging) or **running it locally
 ### 1. Clone the repo
 
 ```bash
-git clone <repo-url> && cd WH_op
+git clone <repo-url>
+cd FlamingGryphonOP
 ```
 
 ### 2. Generate a secret key
 
 ```bash
-python3 -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+python3 -c "import secrets; print(secrets.token_urlsafe(50))"
 ```
 
 ### 3. Create a `.env` file
@@ -52,7 +53,7 @@ docker compose -f docker-compose.prod.yml up -d
 Migrations and static file collection run automatically on container start. Just create the superuser:
 
 ```bash
-docker compose -f docker-compose.prod.yml exec web uv run python manage.py createsuperuser
+docker compose -f docker-compose.prod.yml exec web python manage.py createsuperuser
 ```
 
 ### 6. Configure the site for your group
@@ -74,7 +75,7 @@ No code changes are needed to rebrand the site for a different SCA group.
 unzip gryphony_OP.sql.zip -d legacy_data/
 
 # Import (handles recipients, honors, bestowals, events, recommendations, reports)
-docker compose -f docker-compose.prod.yml exec web uv run python manage.py import_legacy_sql legacy_data/gryphony_OP.sql
+docker compose -f docker-compose.prod.yml exec web python manage.py import_legacy_sql legacy_data/gryphony_OP.sql
 ```
 
 **Starting fresh (no legacy data):**
@@ -145,7 +146,8 @@ server {
 ### 1. Clone and install dependencies
 
 ```bash
-git clone <repo-url> && cd WH_op
+git clone <repo-url>
+cd FlamingGryphonOP
 uv sync
 ```
 
@@ -155,7 +157,7 @@ uv sync
 docker compose up db -d
 ```
 
-> **Port conflict?** If port 5432 is already in use, stop your local Postgres (`sudo systemctl stop postgresql`) or remap the port in `docker-compose.yml` (`"5433:5432"`) and set `POSTGRES_PORT=5433`.
+> **Port conflict?** If port 5432 is already in use, stop your local Postgres (`sudo systemctl stop postgresql`) or remap the port in `docker-compose.yml` (change `"5432:5432"` to `"5433:5432"`) and prefix migrate/runserver commands with `POSTGRES_PORT=5433`.
 
 ### 3. Migrate and create a superuser
 
