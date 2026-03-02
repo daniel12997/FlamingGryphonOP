@@ -27,7 +27,9 @@ COPY --from=builder /app/.venv /app/.venv
 
 COPY . /app
 
-RUN uv run python manage.py collectstatic --noinput 2>/dev/null || true
+# SECRET_KEY is required by settings even for collectstatic; use a build-time
+# placeholder that is never persisted as an ENV var in the final image.
+RUN SECRET_KEY=build-time-placeholder uv run python manage.py collectstatic --noinput
 
 USER app
 

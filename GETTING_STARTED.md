@@ -36,19 +36,25 @@ POSTGRES_PASSWORD=a-strong-database-password
 EOF
 ```
 
-### 4. Build and start
+### 4. Pull and start
+
+The pre-built image is published to GitHub Container Registry on every commit to `master`.
 
 ```bash
-docker compose up -d
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
 ```
+
+> Alternatively, if you want to build from source: `docker compose up -d` (uses `docker-compose.yml` which builds locally).
 
 ### 5. Run migrations and create a superuser
 
 ```bash
-docker compose exec web uv run python manage.py migrate
-docker compose exec web uv run python manage.py createsuperuser
-docker compose exec web uv run python manage.py collectstatic --noinput
+docker compose -f docker-compose.prod.yml exec web uv run python manage.py migrate
+docker compose -f docker-compose.prod.yml exec web uv run python manage.py createsuperuser
 ```
+
+Static files are collected automatically during the Docker image build — no separate `collectstatic` step needed.
 
 ### 6. Configure the site for your group
 
@@ -69,7 +75,7 @@ No code changes are needed to rebrand the site for a different SCA group.
 unzip gryphony_OP.sql.zip -d legacy_data/
 
 # Import (handles recipients, honors, bestowals, events, recommendations, reports)
-docker compose exec web uv run python manage.py import_legacy_sql legacy_data/gryphony_OP.sql
+docker compose -f docker-compose.prod.yml exec web uv run python manage.py import_legacy_sql legacy_data/gryphony_OP.sql
 ```
 
 **Starting fresh (no legacy data):**
@@ -78,6 +84,18 @@ Use the Django admin at `/admin/` to create:
 1. **Groups** — sub-groups within your barony (e.g. Havenholde, Hawkes Keye)
 2. **Honors** — awards and orders your barony gives out
 3. **Recipients** and **Bestowals** as needed, or use the batch entry at `/bestowals/batch/`
+
+### Updating to a new version
+
+Every push to `master` publishes a new `latest` image. To update your server:
+
+```bash
+docker compose -f docker-compose.prod.yml pull
+docker compose -f docker-compose.prod.yml up -d
+docker compose -f docker-compose.prod.yml exec web uv run python manage.py migrate
+```
+
+To pin to a specific release instead of `latest`, edit `docker-compose.prod.yml` and change the image tag to a version tag (e.g. `ghcr.io/daniel12997/flaminggryphonop:v1.2.3`).
 
 ### 8. Set up a reverse proxy
 

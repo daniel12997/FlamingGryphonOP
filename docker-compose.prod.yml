@@ -1,0 +1,33 @@
+# ABOUTME: Production Docker Compose using the pre-built image from GHCR.
+# ABOUTME: Use this on the server instead of docker-compose.yml (which builds locally).
+
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gryphon_op}
+      POSTGRES_USER: ${POSTGRES_USER:-gryphon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+
+  web:
+    image: ghcr.io/daniel12997/flaminggryphonop:latest
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?SECRET_KEY is required}
+      DEBUG: "False"
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:?ALLOWED_HOSTS is required}
+      POSTGRES_DB: ${POSTGRES_DB:-gryphon_op}
+      POSTGRES_USER: ${POSTGRES_USER:-gryphon}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD is required}
+      POSTGRES_HOST: db
+      POSTGRES_PORT: "5432"
+
+volumes:
+  postgres_data:
