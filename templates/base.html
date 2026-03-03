@@ -50,7 +50,6 @@
                         <summary>Recommendations</summary>
                         <ul dir="rtl">
                             <li><a href="{% url 'op:recommendation_create' %}">Recommend</a></li>
-                            <li><a href="{% url 'op:report_create' %}">Report Error</a></li>
                             <li><a href="{% url 'op:my_reports' %}">My Reports</a></li>
                             {% if user.is_staff %}
                             <li><a href="{% url 'op:recommendation_list' %}">All Recommendations</a></li>
@@ -89,7 +88,6 @@
                             <li><a href="{% url 'op:event_list' %}">Events</a></li>
                             {% if user.is_authenticated %}
                             <li><a href="{% url 'op:recommendation_create' %}">Recommend</a></li>
-                            <li><a href="{% url 'op:report_create' %}">Report Error</a></li>
                             <li><a href="{% url 'op:my_reports' %}">My Reports</a></li>
                             <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
                             {% if user.is_staff %}

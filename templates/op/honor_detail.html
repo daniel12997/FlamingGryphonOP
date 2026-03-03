@@ -52,4 +52,7 @@
     <a href="{% url 'op:honor_update' honor.pk %}" role="button">Edit Honor</a>
 </div>
 {% endif %}
+{% if user.is_authenticated %}
+<p><small><a href="{% url 'op:report_create' %}" class="secondary">Report an error on this page</a></small></p>
+{% endif %}
 {% endblock %}

@@ -37,5 +37,6 @@
     <a href="{% url 'op:event_update' event.pk %}" role="button">Edit Event</a>
     <a href="{% url 'op:bestowal_create' %}?event={{ event.pk }}" role="button" class="secondary">Add Bestowal</a>
 </div>
+<p><small><a href="{% url 'op:report_create' %}" class="secondary">Report an error on this page</a></small></p>
 {% endif %}
 {% endblock %}
