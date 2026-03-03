@@ -1,6 +1,7 @@
 # ABOUTME: Management command to import legacy MySQL dump into Django models.
 # ABOUTME: Parses phpMyAdmin INSERT statements and maps old schema to new models.
 
+import datetime
 import html
 import re
 
@@ -319,6 +320,9 @@ class Command(BaseCommand):
         skipped = 0
         external_created = 0
 
+        # Build a date → Event lookup to link bestowals to calendar events
+        event_by_date = {e.date: e for e in Event.objects.all()}
+
         for line in inserts:
             vals = parse_insert_values(line)
             if len(vals) < 8:
@@ -361,6 +365,15 @@ class Command(BaseCommand):
 
             recipient = recipient_lookup[reckey]
 
+            # Link to Event calendar entry if a matching date exists
+            event_obj = None
+            if sort_date:
+                try:
+                    parsed_date = datetime.date.fromisoformat(sort_date)
+                    event_obj = event_by_date.get(parsed_date)
+                except ValueError:
+                    pass
+
             Bestowal.objects.get_or_create(
                 pk=bestowal_id,
                 defaults={
@@ -371,6 +384,7 @@ class Command(BaseCommand):
                     "recipient": recipient,
                     "honor": honor,
                     "notes": decode_legacy_text(vals[7]) or "",
+                    "event": event_obj,
                 },
             )
             count += 1
