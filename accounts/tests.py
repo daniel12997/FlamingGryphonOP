@@ -81,6 +81,15 @@ class TestAuthBackend:
         result = client.login(username="gooduser", password="wrongpass")
         assert result is False
 
+    def test_superuser_can_login_without_approval(self, client):
+        superuser = User.objects.create_superuser(
+            username="su",
+            password="supass123",
+            is_approved=False,
+        )
+        result = client.login(username="su", password="supass123")
+        assert result is True
+
 
 @pytest.mark.django_db
 class TestRegistrationView:

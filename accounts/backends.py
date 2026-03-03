@@ -22,6 +22,6 @@ class ApprovedUserBackend(ModelBackend):
         **kwargs: Any,
     ) -> AbstractBaseUser | None:
         user = super().authenticate(request, username=username, password=password, **kwargs)
-        if user is not None and not user.is_approved:
+        if user is not None and not user.is_approved and not user.is_superuser:
             return None
         return user
