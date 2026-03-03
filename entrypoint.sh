@@ -6,4 +6,4 @@ set -e
 /app/.venv/bin/python manage.py collectstatic --noinput
 /app/.venv/bin/python manage.py migrate --noinput
 
-exec /app/.venv/bin/gunicorn config.wsgi:application --bind 0.0.0.0:8000
+exec /app/.venv/bin/gunicorn config.wsgi:application --bind 0.0.0.0:8000 --control-socket /tmp/gunicorn.ctl
