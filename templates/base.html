@@ -13,6 +13,22 @@
         @media (min-width: 768px) { .nav-narrow { display: none; } }
         /* Mobile: hide flat nav, show hamburger only */
         @media (max-width: 767px)  { .nav-wide   { display: none; } }
+
+        /* Strip the form-element box styling from dropdown triggers inside nav,
+           so they match the plain anchor links visually. */
+        nav details.dropdown > summary:not([role]) {
+            border: none;
+            border-radius: 0;
+            background-color: transparent;
+            color: inherit;
+            box-shadow: none;
+        }
+        nav details.dropdown > summary:not([role]):active,
+        nav details.dropdown > summary:not([role]):focus {
+            border-color: transparent;
+            background-color: transparent;
+            box-shadow: none;
+        }
     </style>
 </head>
 <body>
@@ -22,37 +38,39 @@
                 <li><strong>{{ site_config.group_name_short }} Order of Precedence</strong></li>
             </ul>
 
-            <!-- Desktop: flat public links + dropdowns for user/staff actions -->
+            <!-- Desktop: flat public links + grouped dropdowns -->
             <ul class="nav-wide">
                 <li><a href="{% url 'op:index' %}">Home</a></li>
                 <li><a href="{% url 'op:recipient_list' %}">People</a></li>
                 <li><a href="{% url 'op:honor_list' %}">Awards</a></li>
                 <li><a href="{% url 'op:event_list' %}">Events</a></li>
                 {% if user.is_authenticated %}
-                {% if user.is_staff %}
                 <li>
                     <details class="dropdown">
-                        <summary>Staff</summary>
-                        <ul dir="rtl">
-                            <li><a href="{% url 'op:recommendation_list' %}">Recommendations</a></li>
-                            <li><a href="{% url 'op:report_list' %}">Reports</a></li>
-                            <li><a href="{% url 'op:court_list' %}">Court List</a></li>
-                        </ul>
-                    </details>
-                </li>
-                {% endif %}
-                <li>
-                    <details class="dropdown">
-                        <summary>{{ user.username }}</summary>
+                        <summary>Recommendations</summary>
                         <ul dir="rtl">
                             <li><a href="{% url 'op:recommendation_create' %}">Recommend</a></li>
                             <li><a href="{% url 'op:report_create' %}">Report Error</a></li>
-                            <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
                             <li><a href="{% url 'op:my_reports' %}">My Reports</a></li>
-                            <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+                            {% if user.is_staff %}
+                            <li><a href="{% url 'op:recommendation_list' %}">All Recommendations</a></li>
+                            <li><a href="{% url 'op:report_list' %}">All Reports</a></li>
+                            {% endif %}
                         </ul>
                     </details>
                 </li>
+                <li>
+                    <details class="dropdown">
+                        <summary>Court</summary>
+                        <ul dir="rtl">
+                            <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
+                            {% if user.is_staff %}
+                            <li><a href="{% url 'op:court_list' %}">Court List</a></li>
+                            {% endif %}
+                        </ul>
+                    </details>
+                </li>
+                <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
                 {% else %}
                 <li><a href="{% url 'accounts:login' %}">Login</a></li>
                 <li><a href="{% url 'accounts:register' %}">Register</a></li>
@@ -72,11 +90,11 @@
                             {% if user.is_authenticated %}
                             <li><a href="{% url 'op:recommendation_create' %}">Recommend</a></li>
                             <li><a href="{% url 'op:report_create' %}">Report Error</a></li>
-                            <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
                             <li><a href="{% url 'op:my_reports' %}">My Reports</a></li>
+                            <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
                             {% if user.is_staff %}
-                            <li><a href="{% url 'op:recommendation_list' %}">Recommendations</a></li>
-                            <li><a href="{% url 'op:report_list' %}">Reports</a></li>
+                            <li><a href="{% url 'op:recommendation_list' %}">All Recommendations</a></li>
+                            <li><a href="{% url 'op:report_list' %}">All Reports</a></li>
                             <li><a href="{% url 'op:court_list' %}">Court List</a></li>
                             {% endif %}
                             <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
