@@ -94,7 +94,11 @@ def parse_insert_values(line):
             i += 1
             parts = []
             while i < n:
-                if raw[i] == "\\" and i + 1 < n and raw[i + 1] == "'":
+                if raw[i] == "\\" and i + 1 < n and raw[i + 1] == "\\":
+                    # Escaped backslash → literal backslash
+                    parts.append("\\")
+                    i += 2
+                elif raw[i] == "\\" and i + 1 < n and raw[i + 1] == "'":
                     # Backslash-escaped quote
                     parts.append("'")
                     i += 2
@@ -321,7 +325,8 @@ class Command(BaseCommand):
                 continue
 
             bestowal_id = int(vals[0])
-            sort_date = vals[1]  # Could be None
+            # MySQL uses '0000-00-00' as a null date sentinel; treat as None
+            sort_date = vals[1] if vals[1] and vals[1] != "0000-00-00" else None
             reckey = int(vals[5]) if vals[5] and vals[5] != "0" else 0
             honorkey = int(vals[6]) if vals[6] and vals[6] != "0" else 0
 
