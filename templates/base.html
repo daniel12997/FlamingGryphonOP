@@ -8,6 +8,12 @@
     <title>{% block title %}Order of Precedence{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" integrity="sha384-L1dWfspMTHU/ApYnFiMz2QID/PlP1xCW9visvBdbEkOLkSSWsP6ZJWhPw6apiXxU" crossorigin="anonymous">
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+    <style>
+        /* Desktop: show flat nav + dropdowns, hide hamburger */
+        @media (min-width: 768px) { .nav-narrow { display: none; } }
+        /* Mobile: hide flat nav, show hamburger only */
+        @media (max-width: 767px)  { .nav-wide   { display: none; } }
+    </style>
 </head>
 <body>
     <header class="container">
@@ -15,26 +21,72 @@
             <ul>
                 <li><strong>{{ site_config.group_name_short }} Order of Precedence</strong></li>
             </ul>
-            <ul>
+
+            <!-- Desktop: flat public links + dropdowns for user/staff actions -->
+            <ul class="nav-wide">
                 <li><a href="{% url 'op:index' %}">Home</a></li>
                 <li><a href="{% url 'op:recipient_list' %}">People</a></li>
                 <li><a href="{% url 'op:honor_list' %}">Awards</a></li>
                 <li><a href="{% url 'op:event_list' %}">Events</a></li>
                 {% if user.is_authenticated %}
-                <li><a href="{% url 'op:recommendation_create' %}">Recommend</a></li>
-                <li><a href="{% url 'op:report_create' %}">Report Error</a></li>
-                <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
                 {% if user.is_staff %}
-                <li><a href="{% url 'op:recommendation_list' %}">Recommendations</a></li>
-                <li><a href="{% url 'op:report_list' %}">Reports</a></li>
-                <li><a href="{% url 'op:court_list' %}">Court List</a></li>
+                <li>
+                    <details>
+                        <summary>Staff</summary>
+                        <ul dir="rtl">
+                            <li><a href="{% url 'op:recommendation_list' %}">Recommendations</a></li>
+                            <li><a href="{% url 'op:report_list' %}">Reports</a></li>
+                            <li><a href="{% url 'op:court_list' %}">Court List</a></li>
+                        </ul>
+                    </details>
+                </li>
                 {% endif %}
-                <li><a href="{% url 'op:my_reports' %}">My Reports</a></li>
-                <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+                <li>
+                    <details>
+                        <summary>{{ user.username }}</summary>
+                        <ul dir="rtl">
+                            <li><a href="{% url 'op:recommendation_create' %}">Recommend</a></li>
+                            <li><a href="{% url 'op:report_create' %}">Report Error</a></li>
+                            <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
+                            <li><a href="{% url 'op:my_reports' %}">My Reports</a></li>
+                            <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+                        </ul>
+                    </details>
+                </li>
                 {% else %}
                 <li><a href="{% url 'accounts:login' %}">Login</a></li>
                 <li><a href="{% url 'accounts:register' %}">Register</a></li>
                 {% endif %}
+            </ul>
+
+            <!-- Mobile: single hamburger containing all links -->
+            <ul class="nav-narrow">
+                <li>
+                    <details>
+                        <summary aria-label="Menu">☰</summary>
+                        <ul dir="rtl">
+                            <li><a href="{% url 'op:index' %}">Home</a></li>
+                            <li><a href="{% url 'op:recipient_list' %}">People</a></li>
+                            <li><a href="{% url 'op:honor_list' %}">Awards</a></li>
+                            <li><a href="{% url 'op:event_list' %}">Events</a></li>
+                            {% if user.is_authenticated %}
+                            <li><a href="{% url 'op:recommendation_create' %}">Recommend</a></li>
+                            <li><a href="{% url 'op:report_create' %}">Report Error</a></li>
+                            <li><a href="{% url 'op:batch_bestowal' %}">Record Court</a></li>
+                            <li><a href="{% url 'op:my_reports' %}">My Reports</a></li>
+                            {% if user.is_staff %}
+                            <li><a href="{% url 'op:recommendation_list' %}">Recommendations</a></li>
+                            <li><a href="{% url 'op:report_list' %}">Reports</a></li>
+                            <li><a href="{% url 'op:court_list' %}">Court List</a></li>
+                            {% endif %}
+                            <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+                            {% else %}
+                            <li><a href="{% url 'accounts:login' %}">Login</a></li>
+                            <li><a href="{% url 'accounts:register' %}">Register</a></li>
+                            {% endif %}
+                        </ul>
+                    </details>
+                </li>
             </ul>
         </nav>
     </header>
