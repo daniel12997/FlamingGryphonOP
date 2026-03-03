@@ -31,7 +31,7 @@
                 {% if user.is_authenticated %}
                 {% if user.is_staff %}
                 <li>
-                    <details>
+                    <details class="dropdown">
                         <summary>Staff</summary>
                         <ul dir="rtl">
                             <li><a href="{% url 'op:recommendation_list' %}">Recommendations</a></li>
@@ -42,7 +42,7 @@
                 </li>
                 {% endif %}
                 <li>
-                    <details>
+                    <details class="dropdown">
                         <summary>{{ user.username }}</summary>
                         <ul dir="rtl">
                             <li><a href="{% url 'op:recommendation_create' %}">Recommend</a></li>
@@ -62,7 +62,7 @@
             <!-- Mobile: single hamburger containing all links -->
             <ul class="nav-narrow">
                 <li>
-                    <details>
+                    <details class="dropdown">
                         <summary aria-label="Menu">☰</summary>
                         <ul dir="rtl">
                             <li><a href="{% url 'op:index' %}">Home</a></li>
