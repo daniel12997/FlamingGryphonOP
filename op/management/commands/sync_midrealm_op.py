@@ -180,6 +180,48 @@ def _enrich_external_honors(verbosity: int) -> int:
     return updated
 
 
+def _diff_records(remote: list[dict], verbosity: int) -> dict:
+    """Compare remote records against local DB. Returns counts and changed records.
+
+    Checks every remote record for:
+    - NEW: not in local DB at all
+    - CHANGED: exists but a field (award_name, date_raw, alternate_names, notes) differs
+    - DELETED: in local DB but absent from the full remote fetch
+    """
+    remote_keys = {(r["sca_name"], r["award_name"], r["date_raw"]) for r in remote}
+    local_qs = MidrealAward.objects.all()
+    local_by_key = {(a.sca_name, a.award_name, a.date_raw): a for a in local_qs}
+
+    new_records = []
+    changed_records = []
+    deleted_keys = []
+
+    for r in remote:
+        key = (r["sca_name"], r["award_name"], r["date_raw"])
+        local = local_by_key.get(key)
+        if local is None:
+            new_records.append(r)
+        else:
+            diffs = {}
+            for field in ("alternate_names", "notes", "sort_key"):
+                local_val = getattr(local, field) or ""
+                remote_val = r.get(field) or ""
+                if local_val != remote_val:
+                    diffs[field] = (local_val, remote_val)
+            if diffs:
+                changed_records.append({"record": r, "diffs": diffs})
+
+    for key in local_by_key:
+        if key not in remote_keys:
+            deleted_keys.append(key)
+
+    return {
+        "new": new_records,
+        "changed": changed_records,
+        "deleted": deleted_keys,
+    }
+
+
 class Command(BaseCommand):
     help = "Sync the Midrealm Order of Precedence into a local mirror table"
 
@@ -190,6 +232,11 @@ class Command(BaseCommand):
             help="Force a full re-sync even if a previous sync exists",
         )
         parser.add_argument(
+            "--diff",
+            action="store_true",
+            help="Full fetch then report new/changed/deleted records without writing anything",
+        )
+        parser.add_argument(
             "--no-enrich",
             action="store_true",
             help="Skip updating external honor names after sync",
@@ -198,12 +245,16 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         verbosity = options["verbosity"]
         full = options["full"]
+        diff_only = options["diff"]
+
+        # --diff implies a full fetch
+        if diff_only:
+            full = True
 
         # Determine sync mode
         last_sync = MidrealSyncLog.objects.filter(status="ok").first()
         since_sort_key = None
         if last_sync and not full:
-            # Get the highest sort_key we have stored
             latest = MidrealAward.objects.order_by("-sort_key").first()
             if latest:
                 since_sort_key = latest.sort_key
@@ -211,25 +262,35 @@ class Command(BaseCommand):
                     self.stdout.write(f"  Delta sync from sort_key > {since_sort_key}")
         else:
             if verbosity > 0:
-                self.stdout.write("  Full sync")
+                mode = "diff (read-only)" if diff_only else "full sync"
+                self.stdout.write(f"  {mode}")
 
         log = MidrealSyncLog(status="running")
-        log.save()
+        if not diff_only:
+            log.save()
 
         try:
             records, total_remote = asyncio.run(
                 _fetch_all_records(since_sort_key, verbosity)
             )
-            log.records_total = total_remote
 
             if verbosity > 0:
-                self.stdout.write(f"  Fetched {len(records)} records from Midrealm OP (total: {total_remote})")
+                self.stdout.write(
+                    f"  Fetched {len(records)} records from Midrealm OP (total: {total_remote})"
+                )
+
+            if diff_only:
+                diff = _diff_records(records, verbosity)
+                self._print_diff(diff)
+                return
+
+            log.records_total = total_remote
 
             new_count = 0
             with transaction.atomic():
                 for r in records:
                     date_received = _parse_date(r["date_raw"])
-                    obj, created = MidrealAward.objects.update_or_create(
+                    _, created = MidrealAward.objects.update_or_create(
                         sca_name=r["sca_name"],
                         award_name=r["award_name"],
                         date_raw=r["date_raw"],
@@ -259,5 +320,42 @@ class Command(BaseCommand):
         except Exception as e:
             log.status = "error"
             log.error = str(e)
-            log.save()
+            if not diff_only:
+                log.save()
             raise
+
+    def _print_diff(self, diff: dict) -> None:
+        new = diff["new"]
+        changed = diff["changed"]
+        deleted = diff["deleted"]
+
+        self.stdout.write(
+            f"\n  Summary: {len(new)} new, {len(changed)} changed, {len(deleted)} deleted\n"
+        )
+
+        if new:
+            self.stdout.write(f"  NEW ({len(new)}):")
+            for r in new[:50]:
+                self.stdout.write(f"    + {r['sca_name']} | {r['award_name']} | {r['date_raw']}")
+            if len(new) > 50:
+                self.stdout.write(f"    ... and {len(new) - 50} more")
+
+        if changed:
+            self.stdout.write(f"\n  CHANGED ({len(changed)}):")
+            for item in changed[:50]:
+                r = item["record"]
+                self.stdout.write(f"    ~ {r['sca_name']} | {r['award_name']} | {r['date_raw']}")
+                for field, (old, new_val) in item["diffs"].items():
+                    self.stdout.write(f"        {field}: {old!r} → {new_val!r}")
+            if len(changed) > 50:
+                self.stdout.write(f"    ... and {len(changed) - 50} more")
+
+        if deleted:
+            self.stdout.write(f"\n  DELETED ({len(deleted)}):")
+            for name, award, date in deleted[:50]:
+                self.stdout.write(f"    - {name} | {award} | {date}")
+            if len(deleted) > 50:
+                self.stdout.write(f"    ... and {len(deleted) - 50} more")
+
+        if not new and not changed and not deleted:
+            self.stdout.write("  Local mirror is up to date — no differences found.")
