@@ -35,8 +35,9 @@ from op.models import AlternateName, Bestowal, Event, Honor, Recipient, Recommen
 
 
 def index(request: HttpRequest) -> HttpResponse:
+    today = _dt.date.today()
     recent_bestowals = (
-        Bestowal.objects.filter(is_draft=False)
+        Bestowal.objects.filter(is_draft=False, sort_date__lte=today)
         .select_related("recipient", "honor")
         .order_by("-sort_date", "-sequence")[:10]
     )
