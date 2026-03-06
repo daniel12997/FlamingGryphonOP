@@ -76,6 +76,15 @@ unzip gryphony_OP.sql.zip -d legacy_data/
 
 # Import (handles recipients, honors, bestowals, events, recommendations, reports)
 docker compose -f docker-compose.prod.yml exec web python manage.py import_legacy_sql legacy_data/gryphony_OP.sql
+
+# Load the Midrealm OP mirror (pre-fetched fixture, ~30k records, loads in seconds)
+docker compose -f docker-compose.prod.yml exec web python manage.py loaddata op/fixtures/midrealm_op.json.gz
+```
+
+To refresh the Midrealm OP mirror from the live site (full sync ~5 min, delta syncs are fast):
+
+```bash
+docker compose -f docker-compose.prod.yml exec web python manage.py sync_midrealm_op
 ```
 
 **Starting fresh (no legacy data):**
