@@ -270,6 +270,51 @@ class Recommendation(models.Model):
         return f"{self.nominee_sca_name} for {self.honor} ({self.status})"
 
 
+class MidrealAward(models.Model):
+    """A single award entry from the Midrealm Order of Precedence, cached locally."""
+
+    sca_name = models.CharField(max_length=250, db_index=True)
+    award_name = models.CharField(max_length=250)
+    date_received = models.DateField(null=True, blank=True)
+    date_raw = models.CharField(
+        max_length=20,
+        blank=True,
+        help_text="Original date string from Midrealm OP before parsing",
+    )
+    alternate_names = models.CharField(max_length=500, blank=True)
+    notes = models.TextField(blank=True)
+    sort_key = models.CharField(
+        max_length=50,
+        blank=True,
+        db_index=True,
+        help_text="terriblesorting value from Midrealm OP, used for delta syncs",
+    )
+
+    class Meta:
+        ordering = ["sca_name", "date_received"]
+        unique_together = [("sca_name", "award_name", "date_raw")]
+
+    def __str__(self) -> str:
+        return f"{self.sca_name} — {self.award_name} ({self.date_raw or 'unknown'})"
+
+
+class MidrealSyncLog(models.Model):
+    """Records each sync run of the Midrealm OP mirror."""
+
+    synced_at = models.DateTimeField(auto_now_add=True)
+    records_fetched = models.IntegerField(default=0)
+    records_total = models.IntegerField(default=0)
+    new_records = models.IntegerField(default=0)
+    status = models.CharField(max_length=20, default="ok")
+    error = models.TextField(blank=True)
+
+    class Meta:
+        ordering = ["-synced_at"]
+
+    def __str__(self) -> str:
+        return f"MidrealSync {self.synced_at:%Y-%m-%d %H:%M} — {self.records_fetched} records ({self.status})"
+
+
 class Report(models.Model):
     """An error/correction report for OP data."""
 

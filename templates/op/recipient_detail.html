@@ -53,6 +53,40 @@
 </table>
 {% endif %}
 
+{% if midrealm_awards %}
+<h2>Midrealm Order of Precedence</h2>
+<table>
+    <thead>
+        <tr>
+            <th>Date</th>
+            <th>Award</th>
+            <th>Notes</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for a in midrealm_awards %}
+        <tr>
+            <td>{{ a.date_raw|default:"Unknown" }}</td>
+            <td>{{ a.award_name }}</td>
+            <td>{{ a.notes }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endif %}
+
+{% if user.is_staff and midrealm_fuzzy %}
+<details>
+    <summary><small>Possible Midrealm name matches (admin review)</small></summary>
+    <p><small>These names partially match but were not exact. Check for misspellings and link via alternate names if correct.</small></p>
+    <ul>
+        {% for candidate in midrealm_fuzzy %}
+        <li><small>{{ candidate.sca_name }}</small></li>
+        {% endfor %}
+    </ul>
+</details>
+{% endif %}
+
 <h2>Registration</h2>
 <dl>
     <dt>Name registered</dt>

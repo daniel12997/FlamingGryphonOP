@@ -31,7 +31,7 @@ from op.forms import (
     ReportForm,
     ReportStatusForm,
 )
-from op.models import AlternateName, Bestowal, Event, Honor, Recipient, Recommendation, Report
+from op.models import AlternateName, Bestowal, Event, Honor, MidrealAward, Recipient, Recommendation, Report
 
 
 def index(request: HttpRequest) -> HttpResponse:
@@ -80,6 +80,38 @@ class RecipientDetailView(DetailView):
             .order_by("sort_date", "sequence")
         )
         context["alternate_names"] = self.object.alternate_names.all()
+
+        # Collect all names to search against (SCA name + alt names)
+        all_names = [self.object.sca_name] + list(
+            self.object.alternate_names.values_list("name", flat=True)
+        )
+        name_q = Q()
+        for n in all_names:
+            name_q |= Q(sca_name__iexact=n)
+
+        context["midrealm_awards"] = (
+            MidrealAward.objects.filter(name_q).order_by("date_received")
+        )
+
+        # Fuzzy candidates: names that are similar but don't exact-match
+        # (admin only — shown as "possible matches" for manual review)
+        if self.request.user.is_staff:
+            fuzzy_q = Q()
+            for n in all_names:
+                # Prefix match and suffix match to catch minor spelling differences
+                parts = n.split()
+                if parts:
+                    fuzzy_q |= Q(sca_name__istartswith=parts[0])
+                    if len(parts) > 1:
+                        fuzzy_q |= Q(sca_name__iendswith=parts[-1])
+
+            context["midrealm_fuzzy"] = (
+                MidrealAward.objects.filter(fuzzy_q)
+                .exclude(name_q)
+                .values("sca_name")
+                .distinct()
+                .order_by("sca_name")[:20]
+            )
         return context
 
 
