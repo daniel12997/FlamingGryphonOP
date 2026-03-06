@@ -8,7 +8,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.contrib.messages.views import SuccessMessageMixin
-from django.db.models import Count, Q, QuerySet
+from django.db.models import Count, F, Q, QuerySet
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse, reverse_lazy
@@ -77,7 +77,7 @@ class RecipientDetailView(DetailView):
         context["bestowals"] = (
             self.object.bestowals.filter(is_draft=False)
             .select_related("honor", "event")
-            .order_by("sort_date", "sequence")
+            .order_by(F("sort_date").asc(nulls_last=True), "sequence")
         )
         context["alternate_names"] = self.object.alternate_names.all()
 
@@ -90,7 +90,7 @@ class RecipientDetailView(DetailView):
             name_q |= Q(sca_name__iexact=n)
 
         context["midrealm_awards"] = (
-            MidrealAward.objects.filter(name_q).order_by("date_received")
+            MidrealAward.objects.filter(name_q).order_by(F("date_received").asc(nulls_last=True))
         )
 
         # Fuzzy candidates: names that are similar but don't exact-match
@@ -144,7 +144,7 @@ class HonorDetailView(DetailView):
         context["bestowals"] = (
             self.object.bestowals.filter(is_draft=False)
             .select_related("recipient")
-            .order_by("sort_date", "sequence")
+            .order_by(F("sort_date").asc(nulls_last=True), "sequence")
         )
         return context
 
@@ -166,7 +166,7 @@ class EventDetailView(DetailView):
         context["bestowals"] = (
             self.object.bestowals.filter(is_draft=False)
             .select_related("recipient", "honor")
-            .order_by("sort_date", "sequence")
+            .order_by(F("sort_date").asc(nulls_last=True), "sequence")
         )
         return context
 
