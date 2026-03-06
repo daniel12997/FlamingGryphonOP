@@ -329,8 +329,9 @@ class Command(BaseCommand):
                 continue
 
             bestowal_id = int(vals[0])
-            # MySQL uses '0000-00-00' as a null date sentinel; treat as None
-            sort_date = vals[1] if vals[1] and vals[1] != "0000-00-00" else None
+            # Treat MySQL null sentinel and legacy "unknown date" placeholders as None
+            _SENTINEL_DATES = {"0000-00-00", "2045-12-31", "2900-01-01"}
+            sort_date = vals[1] if vals[1] and vals[1] not in _SENTINEL_DATES else None
             reckey = int(vals[5]) if vals[5] and vals[5] != "0" else 0
             honorkey = int(vals[6]) if vals[6] and vals[6] != "0" else 0
 
