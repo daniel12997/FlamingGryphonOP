@@ -1,6 +1,7 @@
 <!-- ABOUTME: Award detail page showing the roll of recipients. -->
 <!-- ABOUTME: Displays honor info, badge image if available, and chronological recipient list. -->
 {% extends "base.html" %}
+{% load op_filters %}
 
 {% block title %}{{ honor }} — Order of Precedence{% endblock %}
 
@@ -36,7 +37,7 @@
     <tbody>
         {% for b in bestowals %}
         <tr>
-            <td>{{ b.display_date|default:b.sort_date|default:"Unknown" }}</td>
+            <td>{{ b.display_date|default:b.sort_date|format_date }}</td>
             <td><a href="{% url 'op:recipient_detail' b.recipient.pk %}">{{ b.recipient.sca_name }}</a></td>
             <td>{{ b.notes }}</td>
         </tr>

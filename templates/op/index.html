@@ -1,6 +1,7 @@
 <!-- ABOUTME: Home page template for the Order of Precedence. -->
 <!-- ABOUTME: Shows welcome text, quick search, and recent bestowals. -->
 {% extends "base.html" %}
+{% load op_filters %}
 
 {% block title %}Home — Order of Precedence{% endblock %}
 
@@ -27,7 +28,7 @@
     <tbody>
         {% for b in recent_bestowals %}
         <tr>
-            <td>{{ b.display_date|default:b.sort_date }}</td>
+            <td>{{ b.display_date|default:b.sort_date|format_date }}</td>
             <td><a href="{% url 'op:recipient_detail' b.recipient.pk %}">{{ b.recipient.sca_name }}</a></td>
             <td>{{ b.honor }}</td>
             <td>{{ b.notes }}</td>

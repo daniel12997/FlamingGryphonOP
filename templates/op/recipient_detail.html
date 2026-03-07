@@ -1,6 +1,7 @@
 <!-- ABOUTME: Person detail page for the Order of Precedence. -->
 <!-- ABOUTME: Shows SCA name, mundane name, alternate names, bestowals, and registration info. -->
 {% extends "base.html" %}
+{% load op_filters %}
 
 {% block title %}{{ recipient.sca_name }} — Order of Precedence{% endblock %}
 
@@ -43,7 +44,7 @@
     <tbody>
         {% for b in bestowals %}
         <tr>
-            <td>{{ b.display_date|default:b.sort_date|default:"Unknown" }}</td>
+            <td>{{ b.display_date|default:b.sort_date|format_date }}</td>
             <td>{{ b.honor }}</td>
             <td>{{ b.event_name|default:b.event|default:"" }}</td>
             <td>{{ b.notes }}</td>
