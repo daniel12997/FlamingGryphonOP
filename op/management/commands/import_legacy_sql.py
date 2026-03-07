@@ -69,6 +69,56 @@ def decode_legacy_text(value):
     return result
 
 
+def _parse_year(raw: str) -> int:
+    """Parse 2- or 4-digit year string; 2-digit years are assumed 1900s."""
+    y = int(raw)
+    return y + 1900 if y < 100 else y
+
+
+def _sort_date_from_display(display_date: str) -> datetime.date | None:
+    """Compute a beginning-of-period sort_date from a legacy display_date string.
+
+    Known date (MM/DD/YYYY or MM/DD/YY) → parse as-is.
+    Day unknown (MM/?/YYYY or MM/?/YY) → first of that month.
+    Month+day unknown (?/?/YYYY, ?/?/YY, ?/YYYY, ?/YY) → Jan 1st of that year.
+    Fully unknown (?, empty) → None.
+    Multi-date strings (e.g. '?/80,?/81') → use the first parseable fragment.
+    """
+    if not display_date:
+        return None
+    for fragment in re.split(r"[,;]", display_date):
+        fragment = fragment.strip()
+        if not fragment or fragment == "?":
+            continue
+        # MM/DD/YYYY or MM/DD/YY — fully known
+        m = re.fullmatch(r"(\d{1,2})/(\d{1,2})/(\d{2,4})", fragment)
+        if m:
+            try:
+                return datetime.date(_parse_year(m.group(3)), int(m.group(1)), int(m.group(2)))
+            except ValueError:
+                continue
+        # MM/?/YYYY or MM/?/YY — day unknown → first of month
+        m = re.fullmatch(r"(\d{1,2})/\?/(\d{2,4})", fragment)
+        if m:
+            try:
+                return datetime.date(_parse_year(m.group(2)), int(m.group(1)), 1)
+            except ValueError:
+                continue
+        # ?/?/YYYY or ?/?/YY — month+day unknown → Jan 1st
+        m = re.fullmatch(r"\?/\?/(\d{2,4})", fragment)
+        if m:
+            return datetime.date(_parse_year(m.group(1)), 1, 1)
+        # ?/YYYY or ?/YY — year-only fragment
+        m = re.fullmatch(r"\?/(\d{2,4})", fragment)
+        if m:
+            return datetime.date(_parse_year(m.group(1)), 1, 1)
+        # YYYY alone
+        m = re.fullmatch(r"(\d{4})", fragment)
+        if m:
+            return datetime.date(int(m.group(1)), 1, 1)
+    return None
+
+
 def parse_insert_values(line):
     """Parse a single INSERT INTO ... VALUES (...) statement and return a list of values.
 
@@ -331,7 +381,14 @@ class Command(BaseCommand):
             bestowal_id = int(vals[0])
             # Treat MySQL null sentinel and legacy "unknown date" placeholders as None
             _SENTINEL_DATES = {"0000-00-00", "2045-12-31", "2900-01-01"}
-            sort_date = vals[1] if vals[1] and vals[1] not in _SENTINEL_DATES else None
+            raw_sort_date = vals[1] if vals[1] and vals[1] not in _SENTINEL_DATES else None
+            display_date_raw = decode_legacy_text(vals[3]) or ""
+            # Re-derive sort_date from display_date using beginning-of-period logic
+            # so uncertain dates (day/month unknown) sort as older, not newer
+            if display_date_raw and "?" in display_date_raw:
+                sort_date = _sort_date_from_display(display_date_raw)
+            else:
+                sort_date = raw_sort_date
             reckey = int(vals[5]) if vals[5] and vals[5] != "0" else 0
             honorkey = int(vals[6]) if vals[6] and vals[6] != "0" else 0
 
@@ -369,18 +426,20 @@ class Command(BaseCommand):
             # Link to Event calendar entry if a matching date exists
             event_obj = None
             if sort_date:
-                try:
-                    parsed_date = datetime.date.fromisoformat(sort_date)
-                    event_obj = event_by_date.get(parsed_date)
-                except ValueError:
-                    pass
+                if isinstance(sort_date, datetime.date):
+                    event_obj = event_by_date.get(sort_date)
+                else:
+                    try:
+                        event_obj = event_by_date.get(datetime.date.fromisoformat(sort_date))
+                    except ValueError:
+                        pass
 
             Bestowal.objects.get_or_create(
                 pk=bestowal_id,
                 defaults={
                     "sort_date": sort_date,
                     "sequence": decode_legacy_text(vals[2]) or "",
-                    "display_date": decode_legacy_text(vals[3]) or "",
+                    "display_date": display_date_raw,
                     "event_name": decode_legacy_text(vals[4]) or "",
                     "recipient": recipient,
                     "honor": honor,
