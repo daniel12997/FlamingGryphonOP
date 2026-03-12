@@ -69,7 +69,12 @@
                         </ul>
                     </details>
                 </li>
-                <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+                <li>
+                    <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;margin:0">
+                        {% csrf_token %}
+                        <button type="submit" class="outline" style="padding:0.25rem 0.75rem">Logout</button>
+                    </form>
+                </li>
                 {% else %}
                 <li><a href="{% url 'accounts:login' %}">Login</a></li>
                 <li><a href="{% url 'accounts:register' %}">Register</a></li>
@@ -95,7 +100,12 @@
                             <li><a href="{% url 'op:report_list' %}">All Reports</a></li>
                             <li><a href="{% url 'op:court_list' %}">Court List</a></li>
                             {% endif %}
-                            <li><a href="{% url 'accounts:logout' %}">Logout</a></li>
+                            <li>
+                                <form method="post" action="{% url 'accounts:logout' %}" style="margin:0">
+                                    {% csrf_token %}
+                                    <button type="submit" class="outline" style="width:100%;text-align:left">Logout</button>
+                                </form>
+                            </li>
                             {% else %}
                             <li><a href="{% url 'accounts:login' %}">Login</a></li>
                             <li><a href="{% url 'accounts:register' %}">Register</a></li>
