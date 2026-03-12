@@ -62,19 +62,26 @@ a:hover {
 header.container {
   background-color: #6c0000;
   background-image: linear-gradient(to bottom, #8b0000, #5a0000);
-  padding-top: 0.5rem;
+  padding-top: 0;
   padding-bottom: 0;
+  padding-left: 0;
+  padding-right: 0;
   margin-bottom: 0;
   max-width: 100%;
   width: 100%;
 }
 
+/* Nav inner content aligns with main.container — same max-width and padding */
 header.container nav {
-  justify-content: center;
+  max-width: var(--pico-viewport-breakpoint-lg, 1200px);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--pico-spacing, 1rem);
+  padding-right: var(--pico-spacing, 1rem);
 }
 
 header.container nav > ul {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 /* Site logo — sized relative to nav font/line-height so it scales with the header */
