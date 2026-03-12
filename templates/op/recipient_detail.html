@@ -39,6 +39,7 @@
             <th>Honor</th>
             <th>Event</th>
             <th>Notes</th>
+            {% if user.is_authenticated %}<th></th>{% endif %}
         </tr>
     </thead>
     <tbody>
@@ -48,6 +49,9 @@
             <td>{{ b.honor }}</td>
             <td>{{ b.event_name|default:b.event|default:"" }}</td>
             <td>{{ b.notes }}</td>
+            {% if user.is_authenticated %}
+            <td><a href="{% url 'op:bestowal_update' b.pk %}">Edit</a></td>
+            {% endif %}
         </tr>
         {% endfor %}
     </tbody>
