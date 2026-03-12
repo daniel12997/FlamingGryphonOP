@@ -286,12 +286,14 @@ a[role="button"]:not(.secondary):not(.outline):hover {
 }
 
 a[role="button"].secondary {
-  color: #6c0000;
-  border-color: #6c0000;
+  color: #ffffff;
+  background-color: #6e6c6c;
+  border-color: #6e6c6c;
 }
 
 a[role="button"].secondary:hover {
-  background-color: #6c0000;
+  background-color: #555;
+  border-color: #555;
   color: #ffffff;
   text-decoration: none;
 }

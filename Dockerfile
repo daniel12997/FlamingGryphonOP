@@ -36,6 +36,11 @@ RUN if [ -f /app/gryphony_OP.sql.zip ]; then \
         rm /app/gryphony_OP.sql.zip; \
     fi
 
+# Move Midrealm fixture to /tmp so it survives the volume mounts at runtime
+RUN if [ -f /app/legacy_data/midrealm_op.json ]; then \
+        mv /app/legacy_data/midrealm_op.json /tmp/midrealm_op.json; \
+    fi
+
 # Give the app user write access to staticfiles (populated at container start)
 RUN mkdir -p /app/staticfiles && chown app:app /app/staticfiles
 

@@ -16,4 +16,13 @@ if [ -f /tmp/gryphony_OP.sql ]; then
     fi
 fi
 
+# Auto-load Midrealm OP fixture if present and table is empty
+if [ -f /tmp/midrealm_op.json ]; then
+    MIDREALM_COUNT=$(/app/.venv/bin/python manage.py shell -c "from op.models import MidrealAward; print(MidrealAward.objects.count())" 2>/dev/null || echo "0")
+    if [ "$MIDREALM_COUNT" = "0" ]; then
+        echo "Loading Midrealm OP fixture..."
+        /app/.venv/bin/python manage.py loaddata /tmp/midrealm_op.json
+    fi
+fi
+
 exec /app/.venv/bin/gunicorn config.wsgi:application --bind 0.0.0.0:8000 --control-socket /tmp/gunicorn.ctl
