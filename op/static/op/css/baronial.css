@@ -70,12 +70,11 @@ header.container {
 }
 
 header.container nav {
-  align-items: center;
+  justify-content: center;
 }
 
-header.container nav > ul:first-child {
-  gap: 0.75rem;
-  align-items: center;
+header.container nav > ul {
+  justify-content: center;
 }
 
 /* Site logo — sized relative to nav font/line-height so it scales with the header */
