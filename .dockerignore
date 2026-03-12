@@ -1,0 +1,11 @@
+# ABOUTME: Files to exclude from the Docker build context.
+# ABOUTME: Prevents host .venv and other local artifacts from overriding image-built ones.
+
+.venv
+__pycache__
+*.pyc
+*.pyo
+.git
+.env
+!gryphony_OP.sql.zip
+media

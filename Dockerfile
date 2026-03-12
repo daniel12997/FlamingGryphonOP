@@ -19,6 +19,7 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq5 \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
 RUN useradd --create-home --shell /bin/bash app
@@ -28,6 +29,12 @@ WORKDIR /app
 COPY --from=builder /app/.venv /app/.venv
 
 COPY . /app
+
+# Unzip legacy SQL if present so entrypoint can auto-import it
+RUN if [ -f /app/gryphony_OP.sql.zip ]; then \
+        unzip /app/gryphony_OP.sql.zip -d /tmp && \
+        rm /app/gryphony_OP.sql.zip; \
+    fi
 
 # Give the app user write access to staticfiles (populated at container start)
 RUN mkdir -p /app/staticfiles && chown app:app /app/staticfiles
