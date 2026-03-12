@@ -4,6 +4,8 @@
 import datetime as _dt
 from typing import Any
 
+from urllib.parse import urlparse
+
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
@@ -174,25 +176,62 @@ class EventDetailView(DetailView):
 # --- Authenticated CRUD views ---
 
 
-class EventCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+class NextUrlMixin:
+    """Redirect to the page the user came from after save or cancel.
+
+    On GET, seeds 'next' from HTTP_REFERER (excluding the form's own URL).
+    Carries 'next' through POST via a hidden field.
+    get_success_url() uses it before falling back to get_default_success_url().
+    """
+
+    request: HttpRequest  # provided by View at runtime
+
+    def _safe_next(self) -> str | None:
+        next_url = self.request.POST.get("next") or self.request.GET.get("next")
+        if next_url:
+            parsed = urlparse(next_url)
+            if not parsed.netloc and not parsed.scheme and next_url.startswith("/"):
+                return next_url
+        return None
+
+    def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
+        context = super().get_context_data(**kwargs)  # type: ignore[misc]
+        if self.request.method == "GET":
+            referer = self.request.META.get("HTTP_REFERER", "")
+            referer_path = urlparse(referer).path
+            context["next"] = referer_path if referer_path != self.request.path else ""
+        else:
+            context["next"] = self.request.POST.get("next", "")
+        return context
+
+    def get_success_url(self) -> str:
+        return self._safe_next() or self.get_default_success_url()
+
+    def get_default_success_url(self) -> str:
+        return super().get_success_url()  # type: ignore[misc]
+
+
+class EventCreateView(NextUrlMixin, LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Event
     form_class = EventForm
     template_name = "op/event_form.html"
-    success_url = reverse_lazy("op:event_list")
     success_message = "Event created successfully."
 
+    def get_default_success_url(self) -> str:
+        return reverse_lazy("op:event_list")
 
-class EventUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+
+class EventUpdateView(NextUrlMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Event
     form_class = EventForm
     template_name = "op/event_form.html"
     success_message = "Event updated successfully."
 
-    def get_success_url(self) -> str:
+    def get_default_success_url(self) -> str:
         return reverse("op:event_detail", args=[self.object.pk])
 
 
-class RecipientCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+class RecipientCreateView(NextUrlMixin, LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Recipient
     form_class = RecipientForm
     template_name = "op/recipient_form.html"
@@ -221,11 +260,11 @@ class RecipientCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
             return super(CreateView, self).form_valid(form)
         return self.form_invalid(form)
 
-    def get_success_url(self) -> str:
+    def get_default_success_url(self) -> str:
         return reverse("op:recipient_detail", args=[self.object.pk])  # type: ignore[union-attr]
 
 
-class RecipientUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+class RecipientUpdateView(NextUrlMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Recipient
     form_class = RecipientForm
     template_name = "op/recipient_form.html"
@@ -254,7 +293,7 @@ class RecipientUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
             return super(UpdateView, self).form_valid(form)
         return self.form_invalid(form)
 
-    def get_success_url(self) -> str:
+    def get_default_success_url(self) -> str:
         return reverse("op:recipient_detail", args=[self.object.pk])
 
 
@@ -299,25 +338,27 @@ class StaffRequiredMixin(LoginRequiredMixin, UserPassesTestMixin):
         return bool(self.request.user.is_staff)
 
 
-class HonorCreateView(StaffRequiredMixin, SuccessMessageMixin, CreateView):
+class HonorCreateView(NextUrlMixin, StaffRequiredMixin, SuccessMessageMixin, CreateView):
     model = Honor
     form_class = HonorForm
     template_name = "op/honor_form.html"
-    success_url = reverse_lazy("op:honor_list")
     success_message = "Honor created successfully."
 
+    def get_default_success_url(self) -> str:
+        return reverse_lazy("op:honor_list")
 
-class HonorUpdateView(StaffRequiredMixin, SuccessMessageMixin, UpdateView):
+
+class HonorUpdateView(NextUrlMixin, StaffRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Honor
     form_class = HonorForm
     template_name = "op/honor_form.html"
     success_message = "Honor updated successfully."
 
-    def get_success_url(self) -> str:
+    def get_default_success_url(self) -> str:
         return reverse("op:honor_detail", args=[self.object.pk])
 
 
-class BestovalCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+class BestovalCreateView(NextUrlMixin, LoginRequiredMixin, SuccessMessageMixin, CreateView):
     model = Bestowal
     form_class = BestovalForm
     template_name = "op/bestowal_form.html"
@@ -344,11 +385,11 @@ class BestovalCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
                 pass
         return context
 
-    def get_success_url(self) -> str:
+    def get_default_success_url(self) -> str:
         return reverse("op:recipient_detail", args=[self.object.recipient.pk])  # type: ignore[union-attr]
 
 
-class BestovalUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+class BestovalUpdateView(NextUrlMixin, LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Bestowal
     form_class = BestovalForm
     template_name = "op/bestowal_form.html"
@@ -359,7 +400,7 @@ class BestovalUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
         context["prefilled_recipient"] = self.object.recipient
         return context
 
-    def get_success_url(self) -> str:
+    def get_default_success_url(self) -> str:
         return reverse("op:recipient_detail", args=[self.object.recipient.pk])
 
 

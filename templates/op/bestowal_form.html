@@ -9,6 +9,7 @@
 
 <form method="post">
     {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
 
     <label for="recipient-search">
         Recipient
@@ -53,7 +54,7 @@
 
     <div role="group">
         <button type="submit">Save</button>
-        <a href="{% url 'op:index' %}" role="button" class="secondary">Cancel</a>
+        <a href="{{ next|default:'/' }}" role="button" class="secondary">Cancel</a>
     </div>
 </form>
 {% endblock %}

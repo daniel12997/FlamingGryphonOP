@@ -9,6 +9,7 @@
 
 <form method="post">
     {% csrf_token %}
+    <input type="hidden" name="next" value="{{ next }}">
 
     {% for field in form %}
     <label for="{{ field.id_for_label }}">
@@ -52,7 +53,7 @@
 
     <div role="group">
         <button type="submit">Save</button>
-        <a href="{% url 'op:recipient_list' %}" role="button" class="secondary">Cancel</a>
+        <a href="{{ next|default:'/' }}" role="button" class="secondary">Cancel</a>
     </div>
 </form>
 {% endblock %}
