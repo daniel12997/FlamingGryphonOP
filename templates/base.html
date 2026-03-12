@@ -1,5 +1,6 @@
 <!-- ABOUTME: Base template for the Order of Precedence app. -->
-<!-- ABOUTME: Provides site-wide layout, navigation, HTMX, and Pico CSS. -->
+<!-- ABOUTME: Provides site-wide layout, navigation, HTMX, and baronial styling. -->
+{% load static %}
 <!DOCTYPE html>
 <html lang="en" data-theme="light">
 <head>
@@ -7,34 +8,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>{% block title %}Order of Precedence{% endblock %}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@picocss/pico@2/css/pico.min.css" integrity="sha384-L1dWfspMTHU/ApYnFiMz2QID/PlP1xCW9visvBdbEkOLkSSWsP6ZJWhPw6apiXxU" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'op/css/baronial.css' %}">
     <script src="https://unpkg.com/htmx.org@2.0.4" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
     <style>
         /* Desktop: show flat nav + dropdowns, hide hamburger */
         @media (min-width: 768px) { .nav-narrow { display: none; } }
         /* Mobile: hide flat nav, show hamburger only */
         @media (max-width: 767px)  { .nav-wide   { display: none; } }
-
-        /* Strip the form-element box styling from dropdown triggers inside nav,
-           so they match the plain anchor links visually. */
-        nav details.dropdown > summary:not([role]) {
-            border: none;
-            border-radius: 0;
-            background-color: transparent;
-            color: inherit;
-            box-shadow: none;
-        }
-        nav details.dropdown > summary:not([role]):active,
-        nav details.dropdown > summary:not([role]):focus {
-            border-color: transparent;
-            background-color: transparent;
-            box-shadow: none;
-        }
     </style>
 </head>
 <body>
     <header class="container">
         <nav>
             <ul>
+                <li>
+                    <a href="{% url 'op:index' %}" style="border-top:none;padding:0">
+                        <img src="{% static 'op/img/logo.gif' %}" alt="{{ site_config.group_name_short }} crest" class="site-logo">
+                    </a>
+                </li>
                 <li><strong>{{ site_config.group_name_short }} Order of Precedence</strong></li>
             </ul>
 
@@ -72,11 +63,12 @@
                 <li>
                     <form method="post" action="{% url 'accounts:logout' %}" style="display:inline;margin:0">
                         {% csrf_token %}
-                        <button type="submit" class="outline" style="padding:0.25rem 0.75rem">Logout</button>
+                        <input type="hidden" name="next" value="{{ request.path }}">
+                        <button type="submit" class="outline">Logout</button>
                     </form>
                 </li>
                 {% else %}
-                <li><a href="{% url 'accounts:login' %}">Login</a></li>
+                <li><a href="{% url 'accounts:login' %}?next={{ request.path }}">Login</a></li>
                 <li><a href="{% url 'accounts:register' %}">Register</a></li>
                 {% endif %}
             </ul>
@@ -103,11 +95,12 @@
                             <li>
                                 <form method="post" action="{% url 'accounts:logout' %}" style="margin:0">
                                     {% csrf_token %}
+                                    <input type="hidden" name="next" value="{{ request.path }}">
                                     <button type="submit" class="outline" style="width:100%;text-align:left">Logout</button>
                                 </form>
                             </li>
                             {% else %}
-                            <li><a href="{% url 'accounts:login' %}">Login</a></li>
+                            <li><a href="{% url 'accounts:login' %}?next={{ request.path }}">Login</a></li>
                             <li><a href="{% url 'accounts:register' %}">Register</a></li>
                             {% endif %}
                         </ul>

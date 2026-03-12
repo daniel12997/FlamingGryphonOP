@@ -1,0 +1,293 @@
+/* ABOUTME: Baronial theme stylesheet for the Flaming Gryphon Order of Precedence. */
+/* ABOUTME: Colors and typography sourced from the official fg_web WordPress theme. */
+
+/* =========================================================
+   Pico CSS variable overrides — baronial color palette
+   ========================================================= */
+
+:root {
+  --pico-background-color:  #fcf7ed;
+  --pico-color:             #201d1d;
+  --pico-muted-color:       #6e6c6c;
+  --pico-muted-border-color:#faeed5;
+  --pico-primary:           #8b090f;
+  --pico-primary-hover:     #6c0707;
+  --pico-primary-focus:     rgba(139, 9, 15, 0.25);
+  --pico-primary-inverse:   #ffffff;
+  --pico-secondary:         #6c0000;
+  --pico-secondary-hover:   #5a0000;
+  --pico-secondary-inverse: #ffffff;
+  --pico-card-background-color: #ffffff;
+  --pico-card-border-color: #faeed5;
+}
+
+/* =========================================================
+   Body — warm cream with golden gradient at top
+   ========================================================= */
+
+body {
+  background-color: #fcf7ed;
+  background-image: linear-gradient(to bottom, #f0d99a 0px, #fcf7ed 180px);
+  background-repeat: no-repeat;
+  color: #201d1d;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 16px;
+  line-height: 1.4;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Times New Roman", Times, serif;
+  font-weight: normal;
+  color: #201d1d;
+}
+
+/* =========================================================
+   Links
+   ========================================================= */
+
+a, a:visited {
+  color: #8b090f;
+  text-decoration: none;
+}
+
+a:hover {
+  color: #6c0707;
+  text-decoration: underline;
+}
+
+/* =========================================================
+   Header & navigation — dark red gradient with white text
+   ========================================================= */
+
+header.container {
+  background-color: #6c0000;
+  background-image: linear-gradient(to bottom, #8b0000, #5a0000);
+  padding-top: 0.5rem;
+  padding-bottom: 0;
+  margin-bottom: 0;
+}
+
+header.container nav {
+  align-items: center;
+}
+
+header.container nav > ul:first-child {
+  gap: 0.75rem;
+  align-items: center;
+}
+
+/* Site logo */
+.site-logo {
+  max-height: 56px;
+  width: auto;
+  display: block;
+}
+
+/* Site title in nav */
+header.container strong {
+  color: #ffffff;
+  font-family: "Times New Roman", Times, serif;
+  font-size: 1.15rem;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* All nav links in header */
+header.container nav a,
+header.container nav summary {
+  color: #ffffff !important;
+  font-family: "Times New Roman", Times, serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  padding: 0.75rem 0.9rem 0.6rem;
+  border-top: 3px solid transparent;
+  transition: border-color 0.15s;
+}
+
+header.container nav a:hover,
+header.container nav summary:hover {
+  color: #ffffff !important;
+  border-top: 3px solid #debb13;
+  text-decoration: none;
+  padding-top: calc(0.75rem - 3px);
+}
+
+/* Dropdown (details/summary) in nav */
+header.container nav details.dropdown > summary:not([role]) {
+  color: #ffffff !important;
+  background: transparent;
+  border: none;
+  border-top: 3px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.75rem 0.9rem 0.6rem;
+  font-size: 1rem;
+  font-family: "Times New Roman", Times, serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+header.container nav details.dropdown > summary:not([role]):hover,
+header.container nav details.dropdown[open] > summary:not([role]) {
+  border-top: 3px solid #debb13;
+  padding-top: calc(0.75rem - 3px);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Dropdown menus */
+header.container nav details.dropdown > ul {
+  background-color: #6c0000;
+  background-image: linear-gradient(to bottom, #8b0000, #5a0000);
+  border: 1px solid #e1b558;
+  border-top: none;
+}
+
+header.container nav details.dropdown > ul li a {
+  color: #ffffff !important;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  border-top: none !important;
+  padding: 0.4rem 1rem !important;
+}
+
+header.container nav details.dropdown > ul li a:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-top: none !important;
+}
+
+/* Logout button styled to match nav links */
+header.container nav button.outline {
+  color: #ffffff !important;
+  background: transparent;
+  border: none;
+  border-top: 3px solid transparent;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 0.75rem 0.9rem 0.6rem;
+  font-size: 1rem;
+  font-family: "Times New Roman", Times, serif;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  cursor: pointer;
+}
+
+header.container nav button.outline:hover {
+  border-top: 3px solid #debb13;
+  padding-top: calc(0.75rem - 3px);
+  background: transparent;
+  box-shadow: none;
+}
+
+/* =========================================================
+   Main content area
+   ========================================================= */
+
+main.container {
+  background-color: #ffffff;
+  padding: 1.5rem;
+  margin-top: 0;
+  border-left: 1px solid #faeed5;
+  border-right: 1px solid #faeed5;
+  border-bottom: 1px solid #faeed5;
+}
+
+/* =========================================================
+   Tables — alternating row stripes
+   ========================================================= */
+
+thead th {
+  border-bottom: 2px solid #faeed5;
+  color: #201d1d;
+}
+
+tr:nth-child(odd) {
+  background-color: #fcf7ed;
+}
+
+tr:nth-child(even) {
+  background-color: #ffffff;
+}
+
+td, th {
+  padding: 0.3em 0.5em;
+}
+
+/* =========================================================
+   Horizontal rule — golden amber
+   ========================================================= */
+
+hr {
+  border: none;
+  height: 1px;
+  background: #e1b558;
+  margin: 1em 0;
+}
+
+/* =========================================================
+   Footer
+   ========================================================= */
+
+footer.container {
+  background-color: transparent;
+  color: #6e6c6c;
+  border-top: 1px solid #faeed5;
+  font-size: 0.85em;
+  text-align: center;
+  margin-top: 0;
+  padding-top: 0.75rem;
+}
+
+footer.container a {
+  color: #8b090f;
+}
+
+footer.container a:hover {
+  color: #6c0707;
+}
+
+/* =========================================================
+   Buttons — primary (dark red) and secondary (outlined)
+   ========================================================= */
+
+button[type="submit"],
+input[type="submit"],
+a[role="button"]:not(.secondary):not(.outline) {
+  background-color: #8b090f;
+  border-color: #8b090f;
+  color: #ffffff;
+}
+
+button[type="submit"]:hover,
+input[type="submit"]:hover,
+a[role="button"]:not(.secondary):not(.outline):hover {
+  background-color: #6c0707;
+  border-color: #6c0707;
+}
+
+a[role="button"].secondary {
+  color: #6c0000;
+  border-color: #6c0000;
+}
+
+a[role="button"].secondary:hover {
+  background-color: #6c0000;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+/* =========================================================
+   Form inputs — subtle golden focus ring
+   ========================================================= */
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #e1b558;
+  box-shadow: 0 0 0 3px rgba(222, 187, 19, 0.2);
+}
+
+/* =========================================================
+   Flash messages (Pico article used as alert)
+   ========================================================= */
+
+article {
+  background-color: #fdf3e0;
+  border-left: 4px solid #8b090f;
+  border-radius: 0;
+}
