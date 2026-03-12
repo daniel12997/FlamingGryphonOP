@@ -80,9 +80,10 @@ header.container nav > ul:first-child {
 
 /* Site logo */
 .site-logo {
-  max-height: 56px;
+  max-height: 48px;
   width: auto;
   display: block;
+  padding: 0.4rem 0;
 }
 
 /* Site title in nav */
@@ -153,6 +154,14 @@ header.container nav details.dropdown > ul li a {
 header.container nav details.dropdown > ul li a:hover {
   background-color: rgba(0, 0, 0, 0.2);
   border-top: none !important;
+}
+
+/* Logout form — strip block layout so it sits inline with other nav items */
+header.container nav li > form {
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+  padding: 0;
 }
 
 /* Logout button styled to match nav links */
