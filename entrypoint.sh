@@ -5,5 +5,6 @@ set -e
 
 /app/.venv/bin/python manage.py collectstatic --noinput
 /app/.venv/bin/python manage.py migrate --noinput
+/app/.venv/bin/python manage.py createsuperuser --noinput || true
 
 exec /app/.venv/bin/gunicorn config.wsgi:application --bind 0.0.0.0:8000 --control-socket /tmp/gunicorn.ctl
