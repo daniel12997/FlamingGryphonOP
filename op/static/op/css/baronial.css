@@ -65,6 +65,8 @@ header.container {
   padding-top: 0.5rem;
   padding-bottom: 0;
   margin-bottom: 0;
+  max-width: 100%;
+  width: 100%;
 }
 
 header.container nav {
@@ -96,8 +98,9 @@ header.container nav a,
 header.container nav summary {
   color: #ffffff !important;
   font-family: "Times New Roman", Times, serif;
+  font-size: 0.9rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
-  padding: 0.75rem 0.9rem 0.6rem;
+  padding: 0.65rem 0.5rem 0.5rem;
   border-top: 3px solid transparent;
   transition: border-color 0.15s;
 }
@@ -107,7 +110,7 @@ header.container nav summary:hover {
   color: #ffffff !important;
   border-top: 3px solid #debb13;
   text-decoration: none;
-  padding-top: calc(0.75rem - 3px);
+  padding-top: calc(0.65rem - 3px);
 }
 
 /* Dropdown (details/summary) in nav */
@@ -118,8 +121,8 @@ header.container nav details.dropdown > summary:not([role]) {
   border-top: 3px solid transparent;
   border-radius: 0;
   box-shadow: none;
-  padding: 0.75rem 0.9rem 0.6rem;
-  font-size: 1rem;
+  padding: 0.65rem 0.5rem 0.5rem;
+  font-size: 0.9rem;
   font-family: "Times New Roman", Times, serif;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
@@ -127,7 +130,7 @@ header.container nav details.dropdown > summary:not([role]) {
 header.container nav details.dropdown > summary:not([role]):hover,
 header.container nav details.dropdown[open] > summary:not([role]) {
   border-top: 3px solid #debb13;
-  padding-top: calc(0.75rem - 3px);
+  padding-top: calc(0.65rem - 3px);
   background: transparent;
   box-shadow: none;
 }
@@ -160,8 +163,8 @@ header.container nav button.outline {
   border-top: 3px solid transparent;
   border-radius: 0;
   box-shadow: none;
-  padding: 0.75rem 0.9rem 0.6rem;
-  font-size: 1rem;
+  padding: 0.65rem 0.5rem 0.5rem;
+  font-size: 0.9rem;
   font-family: "Times New Roman", Times, serif;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
   cursor: pointer;
@@ -169,7 +172,7 @@ header.container nav button.outline {
 
 header.container nav button.outline:hover {
   border-top: 3px solid #debb13;
-  padding-top: calc(0.75rem - 3px);
+  padding-top: calc(0.65rem - 3px);
   background: transparent;
   box-shadow: none;
 }
