@@ -84,7 +84,18 @@ header.container nav > ul:first-child {
   width: auto;
   display: block;
   padding: 0.3em 0;
-  margin-left: 1rem;
+}
+
+/* Logo link — no border-top hover, just slight opacity change */
+.nav-logo-item a,
+.nav-logo-item a:hover {
+  border-top: none !important;
+  padding-top: 0 !important;
+  opacity: 0.9;
+}
+
+.nav-logo-item a:hover {
+  opacity: 1;
 }
 
 /* Site title in nav */
@@ -157,34 +168,29 @@ header.container nav details.dropdown > ul li a:hover {
   border-top: none !important;
 }
 
-/* Logout form — strip block layout so it sits inline with other nav items */
+/* Logout form — display:contents makes it invisible to layout so the button
+   sits directly in the flex row like any other <li> child */
 header.container nav li > form {
-  display: flex;
-  align-items: stretch;
-  margin: 0;
-  padding: 0;
+  display: contents;
 }
 
-/* Logout button styled to match nav links */
+/* Logout button — identical styles to nav <a> tags */
 header.container nav button.outline {
+  all: unset;
   color: #ffffff !important;
-  background: transparent;
-  border: none;
-  border-top: 3px solid transparent;
-  border-radius: 0;
-  box-shadow: none;
-  padding: 0.65rem 0.5rem 0.5rem;
-  font-size: 0.9rem;
   font-family: "Times New Roman", Times, serif;
+  font-size: 0.9rem;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+  padding: 0.65rem 0.5rem 0.5rem;
+  border-top: 3px solid transparent;
+  transition: border-color 0.15s;
   cursor: pointer;
+  display: block;
 }
 
 header.container nav button.outline:hover {
   border-top: 3px solid #debb13;
   padding-top: calc(0.65rem - 3px);
-  background: transparent;
-  box-shadow: none;
 }
 
 /* =========================================================

@@ -20,16 +20,13 @@
 <body>
     <header class="container">
         <nav>
-            <ul>
-                <li>
-                    <a href="{% url 'op:index' %}" style="border-top:none;padding:0.25rem 0.5rem">
+            <!-- Desktop: flat public links + grouped dropdowns -->
+            <ul class="nav-wide">
+                <li class="nav-logo-item">
+                    <a href="{% url 'op:index' %}">
                         <img src="{% static 'op/img/logo.gif' %}" alt="{{ site_config.group_name_short }} crest" class="site-logo">
                     </a>
                 </li>
-            </ul>
-
-            <!-- Desktop: flat public links + grouped dropdowns -->
-            <ul class="nav-wide">
                 <li><a href="{% url 'op:index' %}">Home</a></li>
                 <li><a href="{% url 'op:recipient_list' %}">People</a></li>
                 <li><a href="{% url 'op:honor_list' %}">Awards</a></li>
