@@ -78,12 +78,13 @@ header.container nav > ul:first-child {
   align-items: center;
 }
 
-/* Site logo */
+/* Site logo — sized relative to nav font/line-height so it scales with the header */
 .site-logo {
-  max-height: 48px;
+  height: 2.8em;
   width: auto;
   display: block;
-  padding: 0.4rem 0;
+  padding: 0.3em 0;
+  margin-left: 1rem;
 }
 
 /* Site title in nav */
