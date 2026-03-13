@@ -132,7 +132,10 @@ class HonorListView(ListView):
         honors = context["honors"]
         context["baronial_honors"] = [h for h in honors if h.category == Honor.Category.BARONIAL]
         context["champion_honors"] = [h for h in honors if h.category == Honor.Category.CHAMPION]
-        context["external_honors"] = [h for h in honors if h.category == Honor.Category.EXTERNAL]
+        context["external_honors"] = [
+            h for h in honors
+            if h.category == Honor.Category.EXTERNAL and not h.name.startswith("External Honor #")
+        ]
         return context
 
 
